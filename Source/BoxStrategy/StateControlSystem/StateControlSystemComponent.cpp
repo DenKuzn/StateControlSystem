@@ -25,18 +25,18 @@ void UStateControlSystemComponent::BeginPlay()
 
 	// If it is not controlled by Player, then end function.
 	{
-		if(APawn* Player = Cast<APawn>(GetOwner()))
+		if ( APawn* Player = Cast<APawn>( GetOwner() ) )
 		{
-			if(!Player->IsLocallyControlled())
+			if ( !Player->IsLocallyControlled() )
 			{
 				return;
 			}
 		}
 		else
 		{
-			if(GetWorld() && GetWorld()->GetFirstPlayerController())
+			if ( GetWorld() && GetWorld()->GetFirstPlayerController() )
 			{
-				if(!GetWorld()->GetFirstPlayerController()->IsLocalController())
+				if ( !GetWorld()->GetFirstPlayerController()->IsLocalController() )
 				{
 					return;
 				}
@@ -51,41 +51,39 @@ void UStateControlSystemComponent::BeginPlay()
 
 	//check BaseStateControl.
 	{
-#if !UE_BUILD_SHIPPING
-		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(BaseStateControlData,);
-		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(BaseStateControlData->StateControlClass.Get(),);
-		if(!BaseStateControlData->StateControlTag.IsValid())
+#if GAME_DEBUG_BUILDS
+		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( StateControlData, );
+		if ( !IsValid( StateControlData->DefaultStateControlData.StateControlClass ) )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). BaseStateControl->StateControlTag invalid"), *FString(__FUNCTION__) );
+			ensureAlwaysMsgf( false, TEXT("%s(). !IsValid( StateControlData->DefaultStateControlData.StateControlClass )"), *FString(__FUNCTION__) );
 			return;
 		}
 #endif
 	}
 
-	UStateControl* NewBaseStateControl = NewObject<UStateControl>( this, BaseStateControlData->StateControlClass );
-	NewBaseStateControl->InitializeStateControl( BaseStateControlData->StateWidgetClass );
+	UStateControl* NewBaseStateControl = NewObject<UStateControl>( this, StateControlData->DefaultStateControlData.StateControlClass );
+	NewBaseStateControl->InitializeStateControl( StateControlData->DefaultStateControlData.StateWidgetClass );
 
-	StateControlsStorage.Add( BaseStateControlData->StateControlTag, NewBaseStateControl );
+	StateControlsStorage.Add( StateControlData->DefaultStateControlData.StateControlTag, NewBaseStateControl );
 	CurrentActiveStates.Add( NewBaseStateControl );
 
-	for(auto* StateControlData : AdditionalStateControlData)
+	for ( FStateControlData& StateControlElem : StateControlData->AllStateControlData )
 	{
 		//check data.
 		{
-#if !UE_BUILD_SHIPPING
-			GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(StateControlData,);
-			GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(StateControlData->StateControlClass.Get(),);
-			if(!StateControlData->StateControlTag.IsValid())
+#if GAME_DEBUG_BUILDS
+			GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( StateControlElem.StateControlClass.Get(), );
+			if ( StateControlElem.StateControlTag == FGameplayTag::EmptyTag )
 			{
-				ensureAlwaysMsgf( false, TEXT("%s(). StateControlData->StateControlTag invalid"), *FString(__FUNCTION__) );
+				ensureAlwaysMsgf( false, TEXT("%s(). StateControlData.StateControlTag == FGameplayTag::EmptyTag"), *FString(__FUNCTION__) );
 				return;
 			}
 #endif
-
 		}
-		UStateControl* NewStateControl = NewObject<UStateControl>( this, StateControlData->StateControlClass );
-		NewStateControl->InitializeStateControl( StateControlData->StateWidgetClass );
-		StateControlsStorage.Add( StateControlData->StateControlTag, NewStateControl );
+
+		UStateControl* NewStateControl = NewObject<UStateControl>( this, StateControlElem.StateControlClass );
+		NewStateControl->InitializeStateControl( StateControlElem.StateWidgetClass );
+		StateControlsStorage.Add( StateControlElem.StateControlTag, NewStateControl );
 	}
 	// ...
 
@@ -94,7 +92,8 @@ void UStateControlSystemComponent::BeginPlay()
 
 
 // Called every frame
-void UStateControlSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+void UStateControlSystemComponent::TickComponent(float DeltaTime,
+                                                 ELevelTick TickType,
                                                  FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
@@ -102,188 +101,119 @@ void UStateControlSystemComponent::TickComponent(float DeltaTime, ELevelTick Tic
 	// ...
 }
 
-void UStateControlSystemComponent::ActivateNewStateByTag(FGameplayTag NewStateTag)
+UStateControl* UStateControlSystemComponent::SetNewActiveStateByTag(FGameplayTag NewStateTag, bool NeedAutoActivate)
 {
 	{
-#if !UE_BUILD_SHIPPING
-		if(!NewStateTag.IsValid())
+#if GAME_DEBUG_BUILDS
+		if ( !NewStateTag.IsValid() )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). !NewStateTag.IsValid()"), *FString(__FUNCTION__));
-			return;
+			ensureAlwaysMsgf( false, TEXT("%s(). !NewStateTag.IsValid()"), *FString(__FUNCTION__) );
+			return nullptr;
 		}
 #endif
 	}
 
-	UStateControl** StageInStorage = StateControlsStorage.Find( NewStateTag );
+	UStateControl** StateControlInStorage = StateControlsStorage.Find( NewStateTag );
 	{
-#if !UE_BUILD_SHIPPING
-		if ( !IsValid( *StageInStorage ) )
+#if GAME_DEBUG_BUILDS
+		if ( !IsValid( *StateControlInStorage ) )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). StateControl Invalid by tag: %s."), *FString(__FUNCTION__), *NewStateTag.GetTagName().ToString() );
-			return;
+			return nullptr;
+		}
+
+		if ( CurrentActiveStates.Contains( *StateControlInStorage ) )
+		{
+			ensureAlwaysMsgf( false, TEXT("%s(). StateControl already active by tag: %s."), *FString(__FUNCTION__), *NewStateTag.GetTagName().ToString() );
+			return nullptr;
 		}
 #endif
 	}
 
-	for(auto StateControlElem : CurrentActiveStates)
+	UStateControl* LastStateControl = CurrentActiveStates.Last();
+
+	// Блокируем горячие клавиши у предыдущего StateControl.
+	if ( IsValid( LastStateControl ) )
 	{
-		if((*StageInStorage) == StateControlElem)
-		{
-			ensureAlwaysMsgf( false, TEXT("%s(). Find Same Active State. State name: %s"), *FString(__FUNCTION__), *StateControlElem->GetName() );
-			return;
-		}
+		LastStateControl->DeactivateHotKeys();
 	}
 
-	CurrentActiveStates.Add( (*StageInStorage) );
+	CurrentActiveStates.Add( ( *StateControlInStorage ) );
 
-	(*StageInStorage)->ActivateState();
+	if ( NeedAutoActivate )
+	{
+		( *StateControlInStorage )->ActivateState();
+	}
+
+	return ( *StateControlInStorage );
 }
 
 void UStateControlSystemComponent::DeactivateState(UStateControl* SearchedStateControl)
 {
 	//Checker.
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( SearchedStateControl, )
 #endif
 	}
 	CurrentActiveStates.Remove( SearchedStateControl );
 	SearchedStateControl->DeactivateState();
+
+	if ( UStateControl* LastStateControl = CurrentActiveStates.Last() )
+	{
+		LastStateControl->ActivateHotKeys();
+	}
 }
 
-void UStateControlSystemComponent::DeactivateStateByTag(FGameplayTag SearchedStateTag)
+UStateControl* UStateControlSystemComponent::DeactivateStateByTag(FGameplayTag SearchedStateTag)
 {
 	{
-#if !UE_BUILD_SHIPPING
-		if(!SearchedStateTag.IsValid())
+#if GAME_DEBUG_BUILDS
+		if ( !SearchedStateTag.IsValid() )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). !NewStateTag.IsValid()"), *FString(__FUNCTION__));
-			return;
+			ensureAlwaysMsgf( false, TEXT("%s(). !NewStateTag.IsValid()"), *FString(__FUNCTION__) );
+			return nullptr;
 		}
 #endif
 	}
 
 	UStateControl** StageInStorage = StateControlsStorage.Find( SearchedStateTag );
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		if ( !IsValid( *StageInStorage ) )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). StateControl Invalid by tag: %s."), *FString(__FUNCTION__), *SearchedStateTag.GetTagName().ToString() );
-			return;
+			return nullptr;
 		}
 #endif
 	}
 
 	DeactivateState( ( *StageInStorage ) );
+
+	return ( *StageInStorage );
 }
 
 bool UStateControlSystemComponent::IsTagForStateControl(FGameplayTag SearchedStateTag, UStateControl* SearchedStateControl)
 {
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( SearchedStateControl, false );
-		if(!SearchedStateTag.IsValid())
+		if ( !SearchedStateTag.IsValid() )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). !SearchedStateTag.IsValid()"), *FString(__FUNCTION__));
+			ensureAlwaysMsgf( false, TEXT("%s(). !SearchedStateTag.IsValid()"), *FString(__FUNCTION__) );
 			return false;
 		}
 #endif
 	}
 
-	return (*StateControlsStorage.Find( SearchedStateTag )) == SearchedStateControl;
-}
-
-void UStateControlSystemComponent::ActivateMainAction()
-{
-
-
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for(int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex--)
-	{
-		// Check instance.
-		{
-#if !UE_BUILD_SHIPPING
-			if(!IsValid(CurrentActiveStates[CurrentIndex]))
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex);
-				continue;
-			}
-#endif
-		}
-
-		// We cache this value, because CurrentActiveState might be removed during ActivateMainAction().
-		bool bConsumeActions = CurrentActiveStates[CurrentIndex]->IsConsumeActions();
-
-		CurrentActiveStates[CurrentIndex]->ActivateMainAction();
-		if(bConsumeActions)
-		{
-			break;
-		}
-	}
-
-}
-
-void UStateControlSystemComponent::ActivateBackAction()
-{
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for(int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex--)
-	{
-		// Check instance.
-		{
-#if !UE_BUILD_SHIPPING
-			if(!IsValid(CurrentActiveStates[CurrentIndex]))
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex);
-				continue;
-			}
-#endif
-		}
-
-		// We cache this value, because CurrentActiveState might be removed during ActivateBackAction().
-		bool bConsumeActions = CurrentActiveStates[CurrentIndex]->IsConsumeActions();
-
-		CurrentActiveStates[CurrentIndex]->ActivateBackAction();
-		if(bConsumeActions)
-		{
-			break;
-		}
-	}
-}
-
-void UStateControlSystemComponent::ActivateSecondAction()
-{
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for(int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex--)
-	{
-		// Check instance.
-		{
-#if !UE_BUILD_SHIPPING
-			if(!IsValid(CurrentActiveStates[CurrentIndex]))
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex);
-				continue;
-			}
-#endif
-		}
-		// We cache this value, because ActivateSecondAction might be removed during ActivateBackAction().
-		bool bConsumeActions = CurrentActiveStates[CurrentIndex]->IsConsumeActions();
-
-		CurrentActiveStates[CurrentIndex]->ActivateSecondAction();
-		if(bConsumeActions)
-		{
-			break;
-		}
-	}
+	return ( *StateControlsStorage.Find( SearchedStateTag ) ) == SearchedStateControl;
 }
 
 bool UStateControlSystemComponent::IsStateControlActive(UStateControl* StateControl)
 {
-	for(auto* StateControlElement : CurrentActiveStates)
+	for ( auto* StateControlElement : CurrentActiveStates )
 	{
-		if(StateControlElement == StateControl)
+		if ( StateControlElement == StateControl )
 		{
 			return true;
 		}
@@ -294,11 +224,96 @@ bool UStateControlSystemComponent::IsStateControlActive(UStateControl* StateCont
 
 bool UStateControlSystemComponent::IslocalyControlled()
 {
-	APawn* Pawn = Cast<APawn>(GetOwner());
-	if(IsValid(Pawn) && Pawn->IsLocallyControlled())
+	APawn* Pawn = Cast<APawn>( GetOwner() );
+	if ( IsValid( Pawn ) && Pawn->IsLocallyControlled() )
 	{
 		return true;
 	}
 	return false;
 }
 
+
+/*
+void UStateControlSystemComponent::ActivateMainAction()
+{
+	// Last in array - activate.
+	int32 CurrentStatesNum = CurrentActiveStates.Num();
+	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; --CurrentIndex )
+	{
+		// Check instance.
+		{
+#if GAME_DEBUG_BUILDS
+			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
+				continue;
+			}
+#endif
+		}
+
+		// We cache this value, because CurrentActiveState might be removed during ActivateMainAction().
+		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
+
+		CurrentActiveStates[ CurrentIndex ]->ActivateMainAction();
+		if ( bConsumeActions )
+		{
+			break;
+		}
+	}
+}
+
+void UStateControlSystemComponent::ActivateBackAction()
+{
+	// Last in array - activate.
+	int32 CurrentStatesNum = CurrentActiveStates.Num();
+	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex-- )
+	{
+		// Check instance.
+		{
+#if GAME_DEBUG_BUILDS
+			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
+				continue;
+			}
+#endif
+		}
+
+		// We cache this value, because CurrentActiveState might be removed during ActivateBackAction().
+		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
+
+		CurrentActiveStates[ CurrentIndex ]->ActivateBackAction();
+		if ( bConsumeActions )
+		{
+			break;
+		}
+	}
+}
+
+void UStateControlSystemComponent::ActivateSecondAction()
+{
+	// Last in array - activate.
+	int32 CurrentStatesNum = CurrentActiveStates.Num();
+	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex-- )
+	{
+		// Check instance.
+		{
+#if GAME_DEBUG_BUILDS
+			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
+				continue;
+			}
+#endif
+		}
+		// We cache this value, because ActivateSecondAction might be removed during ActivateBackAction().
+		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
+
+		CurrentActiveStates[ CurrentIndex ]->ActivateSecondAction();
+		if ( bConsumeActions )
+		{
+			break;
+		}
+	}
+}
+*/

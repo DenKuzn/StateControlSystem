@@ -6,6 +6,7 @@
 #include "GameFramework/Pawn.h"
 #include "BoxStrategyUnitPawn.generated.h"
 
+class UBoxStrategyAbilitySystemComponent;
 class UStateControlInteractComponent;
 
 UCLASS()

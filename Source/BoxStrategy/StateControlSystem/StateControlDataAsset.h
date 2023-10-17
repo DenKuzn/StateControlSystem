@@ -12,15 +12,13 @@
 
 class UStateControlWidget;
 class UStateControl;
-/**
- * 
- */
-UCLASS(BlueprintType, Blueprintable)
-class BOXSTRATEGY_API UStateControlDataAsset : public UDataAsset
+class UInputAction;
+class UInputMappingContext;
+
+USTRUCT(BlueprintType, Blueprintable)
+struct BOXSTRATEGY_API FStateControlData
 {
 	GENERATED_BODY()
-
-public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UStateControlWidget> StateWidgetClass = nullptr;
@@ -32,11 +30,28 @@ public:
 	FGameplayTag StateControlTag;
 
 };
+/**
+ * 
+ */
+UCLASS(BlueprintType, Blueprintable)
+class BOXSTRATEGY_API UStateControlDataAsset : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FStateControlData DefaultStateControlData;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TArray<FStateControlData> AllStateControlData;
+
+};
 
 
 ///////////////////////////////////////// TODO: ПОДУМАТЬ - ИМЕЕТ ЛИ СМЫСЛ ВЫНЕСТИ ЭТО В ОТДЕЛЬНЫЙ ФАЙЛ?
 
-USTRUCT()
+USTRUCT(BlueprintType, Blueprintable)
 struct BOXSTRATEGY_API FStateControlInputAction
 {
 	GENERATED_BODY()
@@ -62,5 +77,39 @@ public:
 
 	UPROPERTY(EditDefaultsOnly)
 	TArray<FStateControlInputAction> InputActionData;
+
+};
+
+
+
+USTRUCT(BlueprintType, Blueprintable)
+struct BOXSTRATEGY_API FStateControlUnitAbility
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly)
+	FGameplayTag UnitAbilityTag;
+
+	UPROPERTY(EditDefaultsOnly, meta = (Categories = "StateControl" ))
+	FGameplayTag StateControlTag;
+
+};
+
+/** Для одного и того же состояния могут использоваться разные абилки.
+ *  Поэтому существует базовый класс SC_Order_Base в Блюпринтах, от которого наследуются все приказы для юнитов.
+ *  Данная таблица нужна для связки StateControl и абилки, которую оно вызывает, когда игрок будет активировать
+ *  приказ через UI.
+ *	UI вызывает State. State вызывает абилку по завершении настройки игроком приказа.
+ */
+UCLASS(BlueprintType, Blueprintable)
+class BOXSTRATEGY_API UStateControlUnitAbilityDataAsset : public UDataAsset
+{
+	GENERATED_BODY()
+
+public:
+
+	UPROPERTY(EditDefaultsOnly)
+	TArray<FStateControlUnitAbility> StateControlAndAbilityConnections;
+
 
 };

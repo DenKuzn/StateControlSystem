@@ -7,6 +7,8 @@ public class BoxStrategy : ModuleRules
 	public BoxStrategy(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+		PublicIncludePaths.Add("BoxStrategy");
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore" });
 
@@ -14,6 +16,11 @@ public class BoxStrategy : ModuleRules
 		PublicDependencyModuleNames.Add("UMG");
 		PublicDependencyModuleNames.Add("EnhancedInput");
 		PublicDependencyModuleNames.Add("MyExtension");
+		PublicDependencyModuleNames.Add("AIModule");
+		PublicDependencyModuleNames.Add("Niagara");
+		PublicDependencyModuleNames.Add("GameplayAbilities");
+		PublicDependencyModuleNames.Add("GameplayTasks");
+		PublicDependencyModuleNames.Add("ModularGameplay");
 
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

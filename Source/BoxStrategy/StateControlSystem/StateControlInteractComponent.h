@@ -9,6 +9,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FSelectStateDelegate );
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FComponentWasChangedDelegate, UStateControlInteractComponent*, StateControlInteractComponent );
+
 /***
  * Component that must be placed in actors that can be clicked and used for interact. For example units, buildings.
  */
@@ -38,6 +40,12 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FSelectStateDelegate ObjectWasDeseleceted;
 
+	UPROPERTY(BlueprintAssignable)
+	FComponentWasChangedDelegate StateTagWasChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FComponentWasChangedDelegate InteractComponentStateWasChanged;
+
 private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (Categories = "StateControl", AllowPrivateAccess = "true" ))
@@ -45,17 +53,30 @@ private:
 
 	bool bSelected = false;
 
+	bool bInteractionEnabled = true;
+
 public:
 
 	UFUNCTION(BlueprintPure)
 	void GetStateControlTag(FGameplayTag& OutStateControlTag);
 
 	UFUNCTION(BlueprintCallable)
-	void ActivateObjectSelection();
+	void ChangeStateControlTag(FGameplayTag& NewStateControlTag);
+
+	UFUNCTION(BlueprintCallable)
+	bool ActivateObjectSelection();
 
 	UFUNCTION(BlueprintCallable)
 	void DeactivateObjectSelection();
 
+	UFUNCTION(BlueprintCallable)
+	void SetInteraction(bool bIsInteractionEnabled = true);
+
 	UFUNCTION(BlueprintPure)
-	bool IsSelected() const { return bSelected; }
+	bool IsComponentSelected() const { return bSelected; };
+
+	UFUNCTION(BlueprintPure)
+	bool IsInteractionEnabled() const { return bInteractionEnabled; };
+
+
 };

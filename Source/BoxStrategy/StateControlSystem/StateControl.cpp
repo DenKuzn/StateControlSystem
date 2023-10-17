@@ -10,6 +10,7 @@
 #include "StateControlDataAsset.h"
 #include "StateControlInteractComponent.h"
 #include "BoxStrategy/GeneralDebugMacroses.h"
+#include "Misc/DataValidation.h"
 
 DEFINE_LOG_CATEGORY_STATIC( StateControlLog, Log, All );
 
@@ -45,7 +46,7 @@ void UStateControl::InitializeStateControl(TSubclassOf<UStateControlWidget> Stat
 		if ( GetStateControlSystemComponent()->IslocalyControlled() )
 		{
 			{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 				if ( InputData->InputActionData.Num() == 0 )
 				{
 					ensureAlwaysMsgf( false, TEXT("%s(). InputData->InputActionData.Num() == 0"), *FString(__FUNCTION__) );
@@ -72,12 +73,12 @@ void UStateControl::InitializeStateControl(TSubclassOf<UStateControlWidget> Stat
 	InputTagPropertyMap.Initialize( this );
 }
 
-void UStateControl::ActivateState()
+void UStateControl::ActivateHotKeys()
 {
 	InputTagPropertyMap.ResetAllValuesToZero();
 
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( GetStateControlSystemComponent(), );
 #endif
 	}
@@ -96,16 +97,22 @@ void UStateControl::ActivateState()
 		}
 	}
 
+}
+
+void UStateControl::ActivateState()
+{
+	ActivateHotKeys();
 	K2_ActivateState();
 }
 
-void UStateControl::DeactivateState()
+void UStateControl::DeactivateHotKeys()
 {
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( GetStateControlSystemComponent(), );
 #endif
 	}
+
 	if ( StateControlHasInputs() )
 	{
 		if ( GetStateControlSystemComponent()->IslocalyControlled() )
@@ -121,8 +128,15 @@ void UStateControl::DeactivateState()
 		}
 	}
 
-	K2_DeactivateState();
 	InputTagPropertyMap.ResetAllValuesToZero();
+}
+
+void UStateControl::DeactivateState()
+{
+
+	DeactivateHotKeys();
+	K2_DeactivateState();
+
 }
 
 void UStateControl::ActivateMainAction()
@@ -179,7 +193,7 @@ bool UStateControl::IsMyTag(FGameplayTag StateControlTag)
 {
 	UStateControlSystemComponent* ControlComponent = GetStateControlSystemComponent();
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( ControlComponent, false );
 #endif
 	}
@@ -191,7 +205,7 @@ bool UStateControl::IsActiveStateControl()
 {
 	UStateControlSystemComponent* ControlComponent = GetStateControlSystemComponent();
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( ControlComponent, false );
 #endif
 	}
@@ -202,7 +216,7 @@ bool UStateControl::IsActiveStateControl()
 void UStateControl::NewInputActionState(FGameplayTag StateControlInputTag, bool NewState)
 {
 	{
-#if !UE_BUILD_SHIPPING
+#if GAME_DEBUG_BUILDS
 		if ( !StateControlInputTag.IsValid() )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). !StateControlInputTag.IsValid()"), *FString(__FUNCTION__) );
@@ -217,6 +231,17 @@ void UStateControl::NewInputActionState(FGameplayTag StateControlInputTag, bool 
 UStateControlSystemComponent* UStateControl::GetStateControlSystemComponent()
 {
 	return Cast<UStateControlSystemComponent>( GetOuter() );
+}
+
+bool UStateControl::IsComponentInteractionEnabled(UStateControlInteractComponent* InteractComponent)
+{
+	{
+#if GAME_DEBUG_BUILDS
+		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(InteractComponent, false  );
+#endif
+	}
+
+	return InteractComponent->IsInteractionEnabled();
 }
 
 bool UStateControl::IsInstantiated() const

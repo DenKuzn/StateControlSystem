@@ -98,10 +98,17 @@ private:
 public:
 	void InitializeStateControl( TSubclassOf<UStateControlWidget> StateWidget = nullptr );
 
+	UFUNCTION(BlueprintCallable)
+	void ActivateHotKeys();
 
-	UFUNCTION(BlueprintImplementableEvent, Category = "StateControlActivation", DisplayName = "ActivateState", meta=(ScriptName = "ActivateState"))
+	UFUNCTION(BlueprintCallable)
+	void DeactivateHotKeys();
+
+
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "StateControlActivation", DisplayName = "ActivateState", meta=(ScriptName = "ActivateState"))
 	void K2_ActivateState();
 	virtual void ActivateState();
+
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "StateControlActivation", DisplayName = "DeactivateState", meta=(ScriptName = "DeactivateState"))
 	void K2_DeactivateState();
@@ -147,6 +154,7 @@ public:
 
 #if WITH_EDITOR
 	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	//virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const;
 #endif
 
 
@@ -156,6 +164,9 @@ private:
 
 	UFUNCTION(BlueprintPure)
 	UStateControlSystemComponent* GetStateControlSystemComponent();
+
+	UFUNCTION(BlueprintCallable, Meta = (ExpandBoolAsExecs = "ReturnValue"))
+	bool IsComponentInteractionEnabled(UStateControlInteractComponent* InteractComponent);
 
 	bool IsInstantiated() const;
 

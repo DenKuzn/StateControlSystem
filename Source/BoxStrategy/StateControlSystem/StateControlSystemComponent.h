@@ -43,11 +43,7 @@ private:
 
 	//Cache Reference on DA with Base State Control separatly.
 	UPROPERTY(EditDefaultsOnly, Category = "StateControlSystem", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStateControlDataAsset> BaseStateControlData = nullptr;
-
-	//All Avaialable State Control Types. Loaded in advance to always be ready to work.
-	UPROPERTY(EditDefaultsOnly, Category = "StateControlSystem", meta = (AllowPrivateAccess = "true"))
-	TArray<UStateControlDataAsset*> AdditionalStateControlData;
+	TObjectPtr<UStateControlDataAsset> StateControlData = nullptr;
 
 	// Stores all created state controls mapped with Tag.
 	UPROPERTY()
@@ -59,26 +55,28 @@ private:
 
 public:
 
+	/** Be sure that you will activate state manually when you turn off AutoActivate*/
 	UFUNCTION(BlueprintCallable)
-	void ActivateNewStateByTag(FGameplayTag NewStateTag);
+	UStateControl* SetNewActiveStateByTag(FGameplayTag NewStateTag, bool NeedAutoActivate = true);
 
 	UFUNCTION(BlueprintCallable)
-	void DeactivateState(UStateControl* SearchedStateControl);
+	void DeactivateState(UStateControl*
+	// /** Be careful. States have own input system and dont need to use Main Action */
+	// UFUNCTION(BlueprintCallable)
+	// void ActivateMainAction();
+	//
+	// UFUNCTION(BlueprintCallable)
+	// void ActivateBackAction();
+	//
+	// UFUNCTION(BlueprintCallable)
+	// void ActivateSecondAction();SearchedStateControl);
 
 	UFUNCTION(BlueprintCallable)
-	void DeactivateStateByTag(FGameplayTag SearchedStateTag);
+	UStateControl* DeactivateStateByTag(FGameplayTag SearchedStateTag);
 
 	UFUNCTION(BlueprintPure)
 	bool IsTagForStateControl(FGameplayTag SearchedStateTag, UStateControl* SearchedStateControl);
 
-	UFUNCTION(BlueprintCallable)
-	void ActivateMainAction();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateBackAction();
-
-	UFUNCTION(BlueprintCallable)
-	void ActivateSecondAction();
 
 	UFUNCTION(BlueprintPure)
 	bool IsStateControlActive(UStateControl* StateControl);

@@ -38,15 +38,50 @@ void UStateControlInteractComponent::GetStateControlTag(FGameplayTag& OutStateCo
 	OutStateControlTag = StateControlTag;
 }
 
-void UStateControlInteractComponent::ActivateObjectSelection()
+void UStateControlInteractComponent::ChangeStateControlTag(FGameplayTag& NewStateControlTag)
 {
+	StateControlTag = NewStateControlTag;
+	StateTagWasChanged.Broadcast(this);
+}
+
+bool UStateControlInteractComponent::ActivateObjectSelection()
+{
+	if(!bInteractionEnabled)
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). !bInteractionEnabled"), *FString(__FUNCTION__) );
+		return false;
+	}
+
+	if ( bSelected )
+	{
+		UE_LOG(LogTemp, Warning, TEXT("%s(). Already Selected"), *FString(__FUNCTION__) );
+		return true;
+	}
+
 	bSelected = true;
 	ObjectWasSeleceted.Broadcast();
+	return true;
 }
 
 void UStateControlInteractComponent::DeactivateObjectSelection()
 {
+	if(!bSelected)
+	{
+		return;
+	}
+
 	bSelected = false;
 	ObjectWasDeseleceted.Broadcast();
+}
+
+void UStateControlInteractComponent::SetInteraction(bool bIsInteractionEnabled)
+{
+	bInteractionEnabled = bIsInteractionEnabled;
+	InteractComponentStateWasChanged.Broadcast(this);
+
+	if(bSelected)
+	{
+		DeactivateObjectSelection();
+	}
 }
 

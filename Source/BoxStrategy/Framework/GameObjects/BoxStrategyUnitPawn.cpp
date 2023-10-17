@@ -2,7 +2,9 @@
 
 #include "BoxStrategyUnitPawn.h"
 
+#include "BoxStrategy/GameAI/AbilitySystem/BoxStrategyAbilitySystemComponent.h"
 #include "BoxStrategy/StateControlSystem/StateControlInteractComponent.h"
+#include "BoxStrategy/GeneralDebugMacroses.h"
 
 
 // Sets default values
@@ -32,8 +34,10 @@ void ABoxStrategyUnitPawn::SetupPlayerInputComponent(UInputComponent* PlayerInpu
 	Super::SetupPlayerInputComponent( PlayerInputComponent );
 }
 
+
 UStateControlInteractComponent* ABoxStrategyUnitPawn::GetInteractComponent()
 {
 	return InteractComponent;
 }
+
 

@@ -6,6 +6,10 @@
 #include "GameFramework/Character.h"
 #include "BoxStrategyUnitCharacter.generated.h"
 
+class AAIController;
+class UBoxStrategyAbilitySystemComponent;
+class UStateControlInteractComponent;
+
 UCLASS()
 class BOXSTRATEGY_API ABoxStrategyUnitCharacter : public ACharacter
 {
@@ -26,12 +30,22 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void PossessedBy(AController* NewController) override;
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UStateControlInteractComponent> InteractComponent = nullptr;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UBoxStrategyAbilitySystemComponent> BoxStrategyUnitAbilitySystemComponent = nullptr;
+
 public:
 	UFUNCTION(BlueprintPure)
 	UStateControlInteractComponent* GetInteractComponent();
+
+	UFUNCTION(BlueprintPure)
+	AAIController* GetAIUnitController();
+
+	UFUNCTION(BlueprintPure)
+	UBoxStrategyAbilitySystemComponent* GetBoxStrategyAbilitySystemComponent();
 };

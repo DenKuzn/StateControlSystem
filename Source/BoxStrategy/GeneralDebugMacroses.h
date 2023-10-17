@@ -16,3 +16,5 @@
 
 #define FUNCTION_START_LOG()	UE_LOG(LogTemp, Warning, TEXT("%s() Started"), *FString(__FUNCTION__))
 #define FUNCTION_END_LOG()		UE_LOG(LogTemp, Warning, TEXT("%s() Ended"), *FString(__FUNCTION__))
+
+#define TEXT_TRUE_FALSE(bValue) bValue ? TEXT("true") : TEXT("false")
