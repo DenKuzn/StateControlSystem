@@ -21,7 +21,6 @@ namespace UnrealBuildTool.Rules
 					"AssetRegistry",
 					"DeveloperSettings",
 					"Engine",
-					"ModularGameplay",
 					"GameFeatures",
 					"EditorSubsystem",
 					"UnrealEd",

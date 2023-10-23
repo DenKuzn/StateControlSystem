@@ -60,7 +60,8 @@ public:
 	UStateControl* SetNewActiveStateByTag(FGameplayTag NewStateTag, bool NeedAutoActivate = true);
 
 	UFUNCTION(BlueprintCallable)
-	void DeactivateState(UStateControl*
+	void DeactivateState(UStateControl* SearchedStateControl);
+
 	// /** Be careful. States have own input system and dont need to use Main Action */
 	// UFUNCTION(BlueprintCallable)
 	// void ActivateMainAction();
@@ -69,7 +70,7 @@ public:
 	// void ActivateBackAction();
 	//
 	// UFUNCTION(BlueprintCallable)
-	// void ActivateSecondAction();SearchedStateControl);
+	// void ActivateSecondAction();
 
 	UFUNCTION(BlueprintCallable)
 	UStateControl* DeactivateStateByTag(FGameplayTag SearchedStateTag);
