@@ -139,21 +139,6 @@ void UStateControl::DeactivateState()
 
 }
 
-void UStateControl::ActivateMainAction()
-{
-	K2_ActivateMainAction();
-}
-
-void UStateControl::ActivateBackAction()
-{
-	K2_ActivateBackAction();
-}
-
-void UStateControl::ActivateSecondAction()
-{
-	K2_ActivateSecondAction();
-}
-
 bool UStateControl::IsConsumeActions()
 {
 	return bConsumeActions;
@@ -276,3 +261,21 @@ EDataValidationResult UStateControl::IsDataValid(TArray<FText>& ValidationErrors
 	return ( ( ValidationErrors.Num() > 0 ) ? EDataValidationResult::Invalid : EDataValidationResult::Valid );
 }
 #endif
+
+
+/*
+void UStateControl::ActivateMainAction()
+{
+	K2_ActivateMainAction();
+}
+
+void UStateControl::ActivateBackAction()
+{
+	K2_ActivateBackAction();
+}
+
+void UStateControl::ActivateSecondAction()
+{
+	K2_ActivateSecondAction();
+}
+*/
