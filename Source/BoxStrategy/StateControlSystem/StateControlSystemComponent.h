@@ -62,16 +62,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void DeactivateState(UStateControl* SearchedStateControl);
 
-	// /** Be careful. States have own input system and dont need to use Main Action */
-	// UFUNCTION(BlueprintCallable)
-	// void ActivateMainAction();
-	//
-	// UFUNCTION(BlueprintCallable)
-	// void ActivateBackAction();
-	//
-	// UFUNCTION(BlueprintCallable)
-	// void ActivateSecondAction();
-
 	UFUNCTION(BlueprintCallable)
 	UStateControl* DeactivateStateByTag(FGameplayTag SearchedStateTag);
 

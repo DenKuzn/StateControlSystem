@@ -26,8 +26,6 @@ public:
 
 	static void InitializeNativeTags();
 
-	//static FGameplayTag FindTagByString(FString TagString, bool bMatchPartialString = false);
-
 protected:
 
 	void AddAllTags(UGameplayTagsManager& Manager);
