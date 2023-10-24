@@ -34,10 +34,6 @@ protected:
 
 	void AddTag(FGameplayTag& OutTag, FString StringTagName, const FString& TagComment);
 
-	//void AddMovementModeTag(FGameplayTag& OutTag, const ANSICHAR* TagName, uint8 MovementMode);
-	//void AddCustomMovementModeTag(FGameplayTag& OutTag, const ANSICHAR* TagName, uint8 CustomMovementMode);
-	//void AddStateMachineTags();
-
 public:
 
 // UNITS
