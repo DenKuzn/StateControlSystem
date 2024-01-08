@@ -10,3 +10,18 @@ void UBoxStrategyAssetManager::StartInitialLoading()
 
 	Super::StartInitialLoading();
 }
+
+UBoxStrategyAssetManager& UBoxStrategyAssetManager::Get()
+{
+	UBoxStrategyAssetManager* This = Cast<UBoxStrategyAssetManager>( GEngine->AssetManager );
+
+	if ( This )
+	{
+		return *This;
+	}
+	else
+	{
+		UE_LOG( LogTemp, Fatal, TEXT("%s(). Invalid AssetManager"), *FString(__FUNCTION__) );
+		return *NewObject<UBoxStrategyAssetManager>();
+	}
+}

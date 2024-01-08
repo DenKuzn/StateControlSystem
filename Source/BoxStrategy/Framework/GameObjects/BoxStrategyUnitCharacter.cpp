@@ -3,9 +3,9 @@
 #include "BoxStrategyUnitCharacter.h"
 #include "Runtime/AIModule/Classes/AIController.h"
 
-#include "BoxStrategy/GameAI/AbilitySystem/BoxStrategyAbilitySystemComponent.h"
-#include "BoxStrategy/StateControlSystem/StateControlInteractComponent.h"
-#include "BoxStrategy/GeneralDebugMacroses.h"
+#include "UnitOrderSystem/Framework/Components/UnitOrderAbilitySystemComponent.h"
+#include "StateControlSystem/Framework/Components/StateControlInteractComponent.h"
+#include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 
 
 // Sets default values
@@ -13,9 +13,9 @@ ABoxStrategyUnitCharacter::ABoxStrategyUnitCharacter()
 {
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	InteractComponent = CreateDefaultSubobject<UStateControlInteractComponent>("Interaction Component");
 
-	BoxStrategyUnitAbilitySystemComponent = CreateDefaultSubobject<UBoxStrategyAbilitySystemComponent>("Unit Ability System Component");
+	StateControlInteractComponent = CreateDefaultSubobject<UStateControlInteractComponent>("State Control Interaction Component");
+	UnitOrderAbilitySystemComponent = CreateDefaultSubobject<UUnitOrderAbilitySystemComponent>("Unit Ability System Component");
 }
 
 // Called when the game starts or when spawned
@@ -44,17 +44,17 @@ void ABoxStrategyUnitCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy( NewController );
 	{
 #if GAME_DEBUG_BUILDS
-		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( BoxStrategyUnitAbilitySystemComponent, );
+		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( UnitOrderAbilitySystemComponent, );
 #endif
 	}
 
-	BoxStrategyUnitAbilitySystemComponent->InitAbilityActorInfo( NewController, this);
-	BoxStrategyUnitAbilitySystemComponent->AbilityActorInfo->SkeletalMeshComponent = GetMesh();
+	UnitOrderAbilitySystemComponent->InitAbilityActorInfo( NewController, this);
+	UnitOrderAbilitySystemComponent->AbilityActorInfo->SkeletalMeshComponent = GetMesh();
 }
 
 UStateControlInteractComponent* ABoxStrategyUnitCharacter::GetInteractComponent()
 {
-	return InteractComponent;
+	return StateControlInteractComponent;
 }
 
 AAIController* ABoxStrategyUnitCharacter::GetAIUnitController()
@@ -62,8 +62,8 @@ AAIController* ABoxStrategyUnitCharacter::GetAIUnitController()
 	return Cast<AAIController>(GetController());
 }
 
-UBoxStrategyAbilitySystemComponent* ABoxStrategyUnitCharacter::GetBoxStrategyAbilitySystemComponent()
+UUnitOrderAbilitySystemComponent* ABoxStrategyUnitCharacter::GetUnitOrderAbilitySystemComponent()
 {
-	return BoxStrategyUnitAbilitySystemComponent;
+	return UnitOrderAbilitySystemComponent;
 }
 

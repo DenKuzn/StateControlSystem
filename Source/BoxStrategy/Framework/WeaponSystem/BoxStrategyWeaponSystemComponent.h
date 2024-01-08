@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Engine/StreamableManager.h"
 
-#include "BoxStrategy/GeneralDebugMacroses.h"
+#include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 
 #include "BoxStrategyWeaponSystemComponent.generated.h"
 
@@ -176,12 +176,13 @@ private:
 
 	void OnFireDelayEnded();
 
+	void AssetWasLoaded();
 
 
-/**		>>>>>>>>>>>>>>>>>>>>>>>>> НА СЛУЧАЙ ЕСЛИ ТЕБЕ ПОНАДОБИЛОСЬ КОПИРОВАТЬ ЭТОТ КОД. <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-		Код надо перенести в собственный AssetManager, который будет в качестве шаблона подписывать эти все функции.
-		Поле TSharedPtr<FStreamableHandle>& не обязательно создавать, достаточно просто передать в функцию даже временный объект.
-*/
+
+
+
+/*
 	template <class Type>
 	void AsyncLoadAsset(TSoftObjectPtr<Type> SoftObjectPtr,
 	                    TSharedPtr<FStreamableHandle>& OutHandle,
@@ -205,7 +206,7 @@ private:
 			return;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("%s(). SoftObjectPtr (%s type) Invalid"), *FString(__FUNCTION__), *AssetNameForDebug);
+		UE_LOG(LogTemp, Warning, TEXT("%s(). SoftObjectPtr (%s type) empty or invalid"), *FString(__FUNCTION__), *AssetNameForDebug);
 	}
 
 
@@ -219,5 +220,6 @@ private:
 		UE_LOG( LogTemp, Error, TEXT("%s(). Is Valid Bullet: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid( *Outer ) ) );
 	}
 
+*/
 
 };

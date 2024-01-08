@@ -7,13 +7,14 @@
 
 class UGameplayTagsManager;
 
+/** Main Goal - add native tags, that can be used in C++.
+ *	Problem:
+ *		- Tags, that are added in C++ can't be used in Pack files. You will need to recompile entire project and replace exe-file to use new tags.
 
-/// В будущем, это будет хранилищем всех тегов, которые используются в игре.
-
-
-/** Нужно переписать структуру следующим образом:
- * - Оставить основную структуру GameplayTags. Она будет отвечать за подгрузку тегов из других структур.
- * - Собрать другие структуры, в которые распихать теги, чтобы все теги были сконцентрированы в одной структуре по типу тега (абилки к абилкам, стейты к стейтам, и так далее). */
+ *	Decision:
+		- NativeTags can be used only for core systems that will be updated very rarely. For example State Controls. Or when using GameplayMessageRouter in C++.
+		- Use only BP Tags that are stored in *.ini files and can be easily changed or added in project in runtime without recompile project.
+ * */
 
 struct BOXSTRATEGY_API FBoxStrategyNativeGameplayTags
 {
@@ -23,7 +24,6 @@ private:
 
 public:
 	static const FBoxStrategyNativeGameplayTags& Get() { return GameplayTags; }
-
 	static void InitializeNativeTags();
 
 protected:
@@ -34,37 +34,9 @@ protected:
 
 public:
 
-// UNITS
-	FGameplayTag BoxStrategy_Unit_UnitType_Warrior;
+	// Example how to use native tags in C++.
+	FGameplayTag NativeGameplayTag_Example_DeepestTag;
 
-// ABILITIES
-	FGameplayTag BoxStrategy_Ability_Unit_Misc_MoveTo;
-	FGameplayTag BoxStrategy_Ability_Unit_Misc_MoveToSight;
-
-	FGameplayTag BoxStrategy_Ability_Unit_Warrior_Auto_SearchEnemies;
-	FGameplayTag BoxStrategy_Ability_Unit_Warrior_Default_MoveOrAttack;
-	FGameplayTag BoxStrategy_Ability_Unit_Warrior_Other_StandardAttack;
-
-// ITEMS
-	FGameplayTag BoxStrategy_Items_Weapons_Hand_Rifle;
-
-// DAMAGE TYPES
-	FGameplayTag BoxStrategy_DamageType_Kinetic;
-
-// STATE CONTROLS BASE INPUTS
-	FGameplayTag StateControl_BaseInputs_MainAction;
-	FGameplayTag StateControl_BaseInputs_SecondAction;
-	FGameplayTag StateControl_BaseInputs_BackAction;
-
-// STATE CONTROLS
-	FGameplayTag StateControl_Orders_MoveTo;
-	FGameplayTag StateControl_Orders_Attack;
-
-	FGameplayTag StateControl_States_DefaultState;
-
-	FGameplayTag StateControl_States_SelectionState_Building;
-	FGameplayTag StateControl_States_SelectionState_Unit_ControlledUnit_MultiSelection;
-	FGameplayTag StateControl_States_SelectionState_Unit_Worker;
 };
 
 

@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Engine/AssetManager.h"
+
+#include "GeneralDebugMacroses/Framework/DebugMacroses.h"
+
 #include "BoxStrategyAssetManager.generated.h"
 
 /** Нужно для того, чтобы в редакторе можно использовать свои ассеты более гибко.
@@ -19,35 +22,45 @@ class BOXSTRATEGY_API UBoxStrategyAssetManager : public UAssetManager
 
 public:
 
-	/** Добавить нужно делегат, который будет вызываться в объекте, который запросил подгрузку ассета. */
+	static UBoxStrategyAssetManager& Get();
+
+public:
 
 	template <class Type>
 	void AsyncLoadAsset(TSoftObjectPtr<Type> SoftObjectPtr,
-						TSharedPtr<FStreamableHandle>& OutHandle,
-						FStreamableManager& StreamableManager,
 						Type** Outer,
 						FStreamableDelegate OnLoadedObjectDelegate,
 						FString AssetNameForDebug = "UnknownAssetType")
 	{
-		OutHandle.Reset();
-		OutHandle = nullptr;
 
-		if ( IsValid( SoftObjectPtr.Get() ) )
+		//OutHandle.Reset();
+		//OutHandle = nullptr;
+
+		if ( ::IsValid( SoftObjectPtr.Get() ) )
 		{
 			*Outer = Cast<Type>( SoftObjectPtr.Get() );
+			UE_LOG(LogTemp, Error, TEXT("%s(). Object is already loaded. AssetName: %s."), *FString(__FUNCTION__), *AssetNameForDebug);
+			OnLoadedObjectDelegate.ExecuteIfBound();
 			return;
 		}
 
 		if ( SoftObjectPtr.IsPending() )
 		{
+			TSharedPtr<FStreamableHandle> NewStreambleHandle;
 			FStreamableDelegate OnLoaded;
-			OnLoaded.BindLambda( [this, &TempOutHandle = OutHandle, &Outer = *Outer, &OnLoadedObjectDelegate = OnLoadedObjectDelegate]() { HandleLoadedAsset( TempOutHandle, &Outer, OnLoadedObjectDelegate ); } );
-			OutHandle = StreamableManager.RequestAsyncLoad( SoftObjectPtr.ToSoftObjectPath(), OnLoaded );
+			OnLoaded.BindLambda( [this, &TempOutHandle = NewStreambleHandle, &Outer = *Outer, &OnLoadedObjectDelegate = OnLoadedObjectDelegate]()
+			{
+				HandleLoadedAsset( TempOutHandle, &Outer, OnLoadedObjectDelegate );
+			} );
+			NewStreambleHandle = Get().GetStreamableManager().RequestAsyncLoad( SoftObjectPtr.ToSoftObjectPath(), OnLoaded );
 			return;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("%s(). SoftObjectPtr (%s type) Invalid"), *FString(__FUNCTION__), *AssetNameForDebug);
+		UE_LOG(LogTemp, Error, TEXT("%s(). SoftObjectPtr (%s type) Invalid"), *FString(__FUNCTION__), *AssetNameForDebug);
+		OnLoadedObjectDelegate.ExecuteIfBound();
 	}
+
+
 
 
 private:
@@ -61,6 +74,6 @@ private:
 		StreamableHandle.Reset();
 		OnLoadedObjectDelegate.ExecuteIfBound();
 
-		UE_LOG( LogTemp, Error, TEXT("%s(). Is Valid Bullet: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid( *Outer ) ) );
+		UE_LOG( LogTemp, Error, TEXT("%s(). Is Valid Bullet: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( ::IsValid( *Outer ) ) );
 	}
 };

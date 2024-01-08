@@ -2,7 +2,7 @@
 
 #include "BoxStrategyBuilding.h"
 
-#include "BoxStrategy/StateControlSystem/StateControlInteractComponent.h"
+#include "StateControlSystem/Framework/Components/StateControlInteractComponent.h"
 
 
 // Sets default values
@@ -10,7 +10,7 @@ ABoxStrategyBuilding::ABoxStrategyBuilding()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	InteractComponent = CreateDefaultSubobject<UStateControlInteractComponent>("Interaction Component");
+	StateControlInteractComponent = CreateDefaultSubobject<UStateControlInteractComponent>("State Control Interaction Component");
 }
 
 // Called when the game starts or when spawned
@@ -29,6 +29,6 @@ void ABoxStrategyBuilding::Tick(float DeltaTime)
 
 UStateControlInteractComponent* ABoxStrategyBuilding::GetInteractComponent()
 {
-	return InteractComponent;
+	return StateControlInteractComponent;
 }
 

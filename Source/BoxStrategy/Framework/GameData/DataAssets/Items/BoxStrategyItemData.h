@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 
-#include "BoxStrategy/Framework/GameData/Structs/BoxStrategyObjectDescription.h"
+#include "ObjectDescriptionPlugin/Framework/ObjectDescriptionStruct.h"
 
 #include "BoxStrategyItemData.generated.h"
 
@@ -22,7 +22,7 @@ class BOXSTRATEGY_API UBoxStrategyItemData : public UDataAsset
 public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FBoxStrategyObjectDescription ItemDescription;
+	FObjectDescription ItemDescription;
 
 	/** Определяют суть этого ресурса.
 	 * - Тип ресурса. Производственный, природный.

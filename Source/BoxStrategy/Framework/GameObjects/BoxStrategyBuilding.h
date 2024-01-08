@@ -30,7 +30,7 @@ public:
 private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStateControlInteractComponent> InteractComponent = nullptr;
+	TObjectPtr<UStateControlInteractComponent> StateControlInteractComponent = nullptr;
 
 public:
 

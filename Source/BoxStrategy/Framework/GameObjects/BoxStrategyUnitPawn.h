@@ -6,9 +6,9 @@
 #include "GameFramework/Pawn.h"
 #include "BoxStrategyUnitPawn.generated.h"
 
-class UBoxStrategyAbilitySystemComponent;
 class UStateControlInteractComponent;
 
+/** Tech Units like tanks, aircraft, robots, etc  */
 UCLASS()
 class BOXSTRATEGY_API ABoxStrategyUnitPawn : public APawn
 {
@@ -31,7 +31,7 @@ public:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStateControlInteractComponent> InteractComponent = nullptr;
+	TObjectPtr<UStateControlInteractComponent> StateControlInteractComponent = nullptr;
 
 public:
 	UFUNCTION(BlueprintPure)

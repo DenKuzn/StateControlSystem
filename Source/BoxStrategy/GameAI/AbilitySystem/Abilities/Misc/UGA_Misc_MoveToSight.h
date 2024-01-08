@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "AITypes.h"
-#include "BoxStrategy/GameAI/AbilitySystem/Abilities/BoxStrategyGameplayAbility.h"
+#include "UnitOrderSystem/Framework/Abilities/UnitOrderGameplayAbility.h"
 #include "UGA_Misc_MoveToSight.generated.h"
 
 class UAITask_MoveTo;
@@ -13,7 +13,7 @@ class UAITask_MoveTo;
  *
  */
 UCLASS()
-class BOXSTRATEGY_API UUGA_Misc_MoveToSight : public UBoxStrategyGameplayAbility
+class BOXSTRATEGY_API UUGA_Misc_MoveToSight : public UUnitOrderGameplayAbility
 {
 	GENERATED_BODY()
 

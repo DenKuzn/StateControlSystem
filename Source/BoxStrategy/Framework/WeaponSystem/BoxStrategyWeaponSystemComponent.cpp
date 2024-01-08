@@ -11,6 +11,8 @@
 #include "BoxStrategy/Framework/HealthSystem/BoxStrategyHealthComponent.h"
 #include "BoxStrategy/System/BoxStrategyAssetManager.h"
 
+#include "GeneralDebugMacroses/Framework/DebugMacroses.h"
+
 
 void UBoxStrategyWeaponSystemComponent::TEST()
 {
@@ -44,9 +46,9 @@ void UBoxStrategyWeaponSystemComponent::TickComponent(float DeltaTime, ELevelTic
 }
 
 void UBoxStrategyWeaponSystemComponent::InitializeWeaponSystemComponent(USkeletalMeshComponent* NewUnitSkeletalMeshComponent,
-                                                             UNiagaraComponent* NewWeaponFireEffectComponent,
-                                                             UNiagaraComponent* NewWeaponBulletEffectComponent,
-                                                             UNiagaraComponent* NewWeaponImpactEffectComponent)
+                                                                        UNiagaraComponent* NewWeaponFireEffectComponent,
+                                                                        UNiagaraComponent* NewWeaponBulletEffectComponent,
+                                                                        UNiagaraComponent* NewWeaponImpactEffectComponent)
 {
 	WeaponSkeletalMeshComponent = NewUnitSkeletalMeshComponent;
 	WeaponFireEffectComponent = NewWeaponFireEffectComponent;
@@ -106,14 +108,14 @@ void UBoxStrategyWeaponSystemComponent::EquipNewWeapon(UBoxStrategyItemData_Weap
 
 	OnWeaponChangedDelegate.Broadcast();
 
-	FStreamableManager& StreamableManager = UBoxStrategyAssetManager::Get().GetStreamableManager();
+	UBoxStrategyAssetManager& BoxStrategyAssetmanager = UBoxStrategyAssetManager::Get();
 
-	AsyncLoadAsset<UNiagaraSystem>( WeaponDataAsset->BulletEffect,	BulletEffect_LoadingHandle,		StreamableManager, &BulletEffect, "BulletEffect" );
-	AsyncLoadAsset<UNiagaraSystem>( WeaponDataAsset->WeaponFireEffect,WeaponFireEffect_LoadingHandle,	StreamableManager, &WeaponFireEffect, "WeaponFireEffect" );
-	AsyncLoadAsset<UNiagaraSystem>( WeaponDataAsset->ImpactEffect,	ImpactEffect_LoadingHandle,		StreamableManager, &ImpactEffect, "ImpactEffect" );
+	BoxStrategyAssetmanager.AsyncLoadAsset( WeaponDataAsset->BulletEffect,		&BulletEffect,			FStreamableDelegate(), "BulletEffect"  );
+	BoxStrategyAssetmanager.AsyncLoadAsset( WeaponDataAsset->WeaponFireEffect,	&WeaponFireEffect,		FStreamableDelegate(), "WeaponFireEffect"  );
+	BoxStrategyAssetmanager.AsyncLoadAsset( WeaponDataAsset->ImpactEffect,		&ImpactEffect,			FStreamableDelegate(), "ImpactEffect"  );
 
-	AsyncLoadAsset<UAnimSequence>(	WeaponDataAsset->AnimFireInstance,	AnimFireSequence_LoadingHandle,  StreamableManager, &AnimFireSequence, "AnimFireSequence" );
-	AsyncLoadAsset<UAnimSequence>(	WeaponDataAsset->AnimReloadInstance,	AnimFireSequence_LoadingHandle,  StreamableManager, &AnimReloadSequence, "AnimReloadSequence" );
+	BoxStrategyAssetmanager.AsyncLoadAsset( WeaponDataAsset->AnimFireInstance,	&AnimFireSequence,		FStreamableDelegate(), "AnimFireSequence"  );
+	BoxStrategyAssetmanager.AsyncLoadAsset( WeaponDataAsset->AnimReloadInstance,	&AnimReloadSequence,	FStreamableDelegate(), "AnimReloadSequence"  );
 
 	FUNCTION_END_LOG();
 }
@@ -283,6 +285,11 @@ void UBoxStrategyWeaponSystemComponent::OnFireDelayEnded()
 	// We need to reset timer before broadcast, because outer can start new fire in this frame, and timer will be available still.
 	ResetTimer( FireTimerHandle );
 	OnFireDelayEndedDelegate.Broadcast();
+}
+
+void UBoxStrategyWeaponSystemComponent::AssetWasLoaded()
+{
+	UE_LOG(LogTemp, Error, TEXT("%s(). Asset was loaded. Success: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid(BulletEffect) ) );
 }
 
 void UBoxStrategyWeaponSystemComponent::GetWeaponStartPoint(FVector& WeaponStartPoint)

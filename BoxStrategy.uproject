@@ -41,6 +41,22 @@
 		{
 			"Name": "GameplayMessageRouter",
 			"Enabled": true
+		},
+		{
+			"Name": "StateControlSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "UnitOrderSystem",
+			"Enabled": true
+		},
+		{
+			"Name": "GeneralDebugMacroses",
+			"Enabled": true
+		},
+		{
+			"Name": "ObjectDescriptionPlugin",
+			"Enabled": true
 		}
 	]
 }

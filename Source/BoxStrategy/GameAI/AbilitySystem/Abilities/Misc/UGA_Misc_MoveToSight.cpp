@@ -4,9 +4,9 @@
 #include "UGA_Misc_MoveToSight.h"
 
 #include "AIController.h"
-#include "BoxStrategy/GeneralDebugMacroses.h"
-#include "BoxStrategy/GameAI/AbilitySystem/BoxStrategyAbilitySystemComponent.h"
-#include "BoxStrategy/GameAI/AbilitySystem/Abilities/Settings/Misc/UGAS_Misc_MoveToSight.h"
+#include "GeneralDebugMacroses/Framework/DebugMacroses.h"
+#include "UnitOrderSystem/Framework/Components/UnitOrderAbilitySystemComponent.h"
+#include "BoxStrategy/GameAI/AbilitySystem/AbilitySettings/Misc/UGAS_Misc_MoveToSight.h"
 #include "GameFramework/Character.h"
 #include "Navigation/PathFollowingComponent.h"
 
@@ -20,7 +20,7 @@ void UUGA_Misc_MoveToSight::ActivateAbility(const FGameplayAbilitySpecHandle Han
                                             const FGameplayAbilityActivationInfo ActivationInfo,
                                             const FGameplayEventData* TriggerEventData)
 {
-	UBoxStrategyAbilitySystemComponent* AbilityComponent = GetBoxStrategyAbilitySystemComponent();
+	UUnitOrderAbilitySystemComponent* AbilityComponent = GetUnitOrderAbilitySystemComponent();
 	const UUGAS_Misc_MoveToSight* AbilitySettings = Cast<UUGAS_Misc_MoveToSight>(GetMyAbilitySettings());
 	{
 #if GAME_DEBUG_BUILDS

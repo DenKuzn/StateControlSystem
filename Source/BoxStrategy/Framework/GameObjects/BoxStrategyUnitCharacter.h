@@ -7,7 +7,7 @@
 #include "BoxStrategyUnitCharacter.generated.h"
 
 class AAIController;
-class UBoxStrategyAbilitySystemComponent;
+class UUnitOrderAbilitySystemComponent;
 class UStateControlInteractComponent;
 
 UCLASS()
@@ -34,10 +34,10 @@ public:
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UStateControlInteractComponent> InteractComponent = nullptr;
+	TObjectPtr<UStateControlInteractComponent> StateControlInteractComponent = nullptr;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UBoxStrategyAbilitySystemComponent> BoxStrategyUnitAbilitySystemComponent = nullptr;
+	TObjectPtr<UUnitOrderAbilitySystemComponent> UnitOrderAbilitySystemComponent = nullptr;
 
 public:
 	UFUNCTION(BlueprintPure)
@@ -47,5 +47,5 @@ public:
 	AAIController* GetAIUnitController();
 
 	UFUNCTION(BlueprintPure)
-	UBoxStrategyAbilitySystemComponent* GetBoxStrategyAbilitySystemComponent();
+	UUnitOrderAbilitySystemComponent* GetUnitOrderAbilitySystemComponent();
 };

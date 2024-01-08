@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 
-#include "..\..\Structs\BoxStrategyObjectDescription.h"
+#include "ObjectDescriptionPlugin/Framework/ObjectDescriptionStruct.h"
 
 #include "BoxStrategyBuildingData.generated.h"
 
@@ -20,7 +20,7 @@ class BOXSTRATEGY_API UBoxStrategyBuildingData : public UDataAsset
 	GENERATED_BODY()
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FBoxStrategyObjectDescription BuildingDescription;
+	FObjectDescription BuildingDescription;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayTagContainer BuildingTags;
