@@ -8,7 +8,7 @@
 #include "UnitOrderSystem/Framework/Abilities/UnitOrderGameplayAbility.h"
 #include "UGA_Warrior_Attack.generated.h"
 
-class UBoxStrategyWeaponSystemComponent;
+class UBoxStrategyHandWeaponComponent;
 /** Атака по цели с возможностью преследования цели.
  *
  */
@@ -36,7 +36,7 @@ public:
 private:
 
 	UPROPERTY()
-	UBoxStrategyWeaponSystemComponent* WeaponSystemComponent = nullptr;
+	UBoxStrategyHandWeaponComponent* WeaponSystemComponent = nullptr;
 
 	UPROPERTY()
 	AActor* TargetActor = nullptr;

@@ -1,26 +1,26 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "BoxStrategyWeaponSystemComponent.h"
+#include "BoxStrategyHandWeaponComponent.h"
 
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
 #include "GameFramework/Actor.h"
 
-#include "BoxStrategy/Framework/GameData/DataAssets/Items/BoxStrategyItemData_Weapon.h"
+#include "BoxStrategy/Framework/GameData/DataAssets/Items/BoxStrategyItemData_HandWeapon.h"
 #include "BoxStrategy/Framework/HealthSystem/BoxStrategyHealthComponent.h"
 #include "BoxStrategy/System/BoxStrategyAssetManager.h"
 
 #include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 
 
-void UBoxStrategyWeaponSystemComponent::TEST()
+void UBoxStrategyHandWeaponComponent::TEST()
 {
 	UE_LOG(LogTemp, Error, TEXT("%s(). Is Valid Bullet: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid( BulletEffect ) ));
 }
 
 // Sets default values for this component's properties
-UBoxStrategyWeaponSystemComponent::UBoxStrategyWeaponSystemComponent()
+UBoxStrategyHandWeaponComponent::UBoxStrategyHandWeaponComponent()
 {
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
@@ -31,7 +31,7 @@ UBoxStrategyWeaponSystemComponent::UBoxStrategyWeaponSystemComponent()
 
 
 // Called when the game starts
-void UBoxStrategyWeaponSystemComponent::BeginPlay()
+void UBoxStrategyHandWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	// ...
@@ -39,13 +39,13 @@ void UBoxStrategyWeaponSystemComponent::BeginPlay()
 }
 
 // Called every frame
-void UBoxStrategyWeaponSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UBoxStrategyHandWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent( DeltaTime, TickType, ThisTickFunction );
 	// ...
 }
 
-void UBoxStrategyWeaponSystemComponent::InitializeWeaponSystemComponent(USkeletalMeshComponent* NewUnitSkeletalMeshComponent,
+void UBoxStrategyHandWeaponComponent::InitializeHandWeaponComponent(USkeletalMeshComponent* NewUnitSkeletalMeshComponent,
                                                                         UNiagaraComponent* NewWeaponFireEffectComponent,
                                                                         UNiagaraComponent* NewWeaponBulletEffectComponent,
                                                                         UNiagaraComponent* NewWeaponImpactEffectComponent)
@@ -56,7 +56,7 @@ void UBoxStrategyWeaponSystemComponent::InitializeWeaponSystemComponent(USkeleta
 	WeaponImpactEffectComponent = NewWeaponImpactEffectComponent;
 }
 
-void UBoxStrategyWeaponSystemComponent::EquipNewWeapon(UBoxStrategyItemData_Weapon* NewWeaponDataAsset)
+void UBoxStrategyHandWeaponComponent::EquipNewWeapon(UBoxStrategyItemData_HandWeapon* NewWeaponDataAsset)
 {
 	FUNCTION_START_LOG();
 
@@ -120,7 +120,7 @@ void UBoxStrategyWeaponSystemComponent::EquipNewWeapon(UBoxStrategyItemData_Weap
 	FUNCTION_END_LOG();
 }
 
-void UBoxStrategyWeaponSystemComponent::UnequipWeapon()
+void UBoxStrategyHandWeaponComponent::UnequipWeapon()
 {
 	{
 #if GAME_DEBUG_BUILDS
@@ -138,7 +138,7 @@ void UBoxStrategyWeaponSystemComponent::UnequipWeapon()
 	OnWeaponChangedDelegate.Broadcast();
 }
 
-void UBoxStrategyWeaponSystemComponent::StartFire(FVector NewFireDirection)
+void UBoxStrategyHandWeaponComponent::StartFire(FVector NewFireDirection)
 {
 	// Выстрел происходит в момент запуска функции. Если таймер активен - значит, выстрел уже был осуществлен недавно, и оружие не готово выпустить новую пулю.
 	if(GetWorld()->GetTimerManager().IsTimerActive( FireTimerHandle ))
@@ -161,7 +161,7 @@ void UBoxStrategyWeaponSystemComponent::StartFire(FVector NewFireDirection)
 
 	//UE_LOG(LogTemp, Error, TEXT("%s(). Create New Fire."), *FString(__FUNCTION__) );
 
-	GetWorld()->GetTimerManager().SetTimer( FireTimerHandle, this, &UBoxStrategyWeaponSystemComponent::OnFireDelayEnded, WeaponDataAsset->FireSpeed, false );
+	GetWorld()->GetTimerManager().SetTimer( FireTimerHandle, this, &UBoxStrategyHandWeaponComponent::OnFireDelayEnded, WeaponDataAsset->FireSpeed, false );
 	CurrentBulletsInClip--;
 
 	NewFireDirection.Normalize();
@@ -216,7 +216,7 @@ void UBoxStrategyWeaponSystemComponent::StartFire(FVector NewFireDirection)
 
 }
 
-void UBoxStrategyWeaponSystemComponent::StartReload()
+void UBoxStrategyHandWeaponComponent::StartReload()
 {
 	{
 #if GAME_DEBUG_BUILDS
@@ -237,7 +237,7 @@ void UBoxStrategyWeaponSystemComponent::StartReload()
 
 	bRealoading = true;
 
-	GetWorld()->GetTimerManager().SetTimer( ReloadTimerHandle, this, &UBoxStrategyWeaponSystemComponent::ReloadFinished, WeaponDataAsset->ReloadTime, false );
+	GetWorld()->GetTimerManager().SetTimer( ReloadTimerHandle, this, &UBoxStrategyHandWeaponComponent::ReloadFinished, WeaponDataAsset->ReloadTime, false );
 
 	if(IsValid(WeaponSkeletalMeshComponent) && IsValid(WeaponSkeletalMeshComponent->GetSkeletalMeshAsset()) && IsValid(AnimReloadSequence))
 	{
@@ -247,12 +247,12 @@ void UBoxStrategyWeaponSystemComponent::StartReload()
 	OnWeaponStartedToReloadDelegate.Broadcast();
 }
 
-bool UBoxStrategyWeaponSystemComponent::IsReloading()
+bool UBoxStrategyHandWeaponComponent::IsReloading()
 {
 	return bRealoading;
 }
 
-bool UBoxStrategyWeaponSystemComponent::IsWeaponEquipped()
+bool UBoxStrategyHandWeaponComponent::IsWeaponEquipped()
 {
 	if(IsValid(WeaponDataAsset))
 	{
@@ -262,7 +262,7 @@ bool UBoxStrategyWeaponSystemComponent::IsWeaponEquipped()
 	return false;
 }
 
-float UBoxStrategyWeaponSystemComponent::GetWeaponRange()
+float UBoxStrategyHandWeaponComponent::GetWeaponRange()
 {
 	if(!IsWeaponEquipped())
 	{
@@ -272,7 +272,7 @@ float UBoxStrategyWeaponSystemComponent::GetWeaponRange()
 	return WeaponDataAsset->WeaponRange;
 }
 
-void UBoxStrategyWeaponSystemComponent::ReloadFinished()
+void UBoxStrategyHandWeaponComponent::ReloadFinished()
 {
 	CurrentBulletsInClip = WeaponDataAsset->ClipSize;
 	bRealoading = false;
@@ -280,19 +280,19 @@ void UBoxStrategyWeaponSystemComponent::ReloadFinished()
 	OnWeaponEndedReloadDelegate.Broadcast();
 }
 
-void UBoxStrategyWeaponSystemComponent::OnFireDelayEnded()
+void UBoxStrategyHandWeaponComponent::OnFireDelayEnded()
 {
 	// We need to reset timer before broadcast, because outer can start new fire in this frame, and timer will be available still.
 	ResetTimer( FireTimerHandle );
 	OnFireDelayEndedDelegate.Broadcast();
 }
 
-void UBoxStrategyWeaponSystemComponent::AssetWasLoaded()
+void UBoxStrategyHandWeaponComponent::AssetWasLoaded()
 {
 	UE_LOG(LogTemp, Error, TEXT("%s(). Asset was loaded. Success: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid(BulletEffect) ) );
 }
 
-void UBoxStrategyWeaponSystemComponent::GetWeaponStartPoint(FVector& WeaponStartPoint)
+void UBoxStrategyHandWeaponComponent::GetWeaponStartPoint(FVector& WeaponStartPoint)
 {
 	WeaponStartPoint = FVector::Zero();
 
@@ -307,7 +307,7 @@ void UBoxStrategyWeaponSystemComponent::GetWeaponStartPoint(FVector& WeaponStart
 	}
 }
 
-void UBoxStrategyWeaponSystemComponent::ResetTimer(FTimerHandle& TimerHandle)
+void UBoxStrategyHandWeaponComponent::ResetTimer(FTimerHandle& TimerHandle)
 {
 	if(GetWorld()->GetTimerManager().IsTimerActive( TimerHandle ))
 	{

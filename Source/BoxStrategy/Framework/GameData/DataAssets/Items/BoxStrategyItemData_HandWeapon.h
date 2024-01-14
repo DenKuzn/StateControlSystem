@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BoxStrategyItemData.h"
-#include "BoxStrategyItemData_Weapon.generated.h"
+#include "BoxStrategyItemData_HandWeapon.generated.h"
 
 class UNiagaraSystem;
 class USkeletalMesh;
@@ -14,7 +14,7 @@ class UAnimSequence;
  *
  */
 UCLASS()
-class BOXSTRATEGY_API UBoxStrategyItemData_Weapon : public UBoxStrategyItemData
+class BOXSTRATEGY_API UBoxStrategyItemData_HandWeapon : public UBoxStrategyItemData
 {
 	GENERATED_BODY()
 

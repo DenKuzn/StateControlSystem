@@ -9,7 +9,7 @@
 #include "BoxStrategy/Global/BoxStrategyNativeGameplayTags.h"
 #include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 #include "BoxStrategy/Framework/HealthSystem/BoxStrategyHealthComponent.h"
-#include "BoxStrategy/Framework/WeaponSystem/BoxStrategyWeaponSystemComponent.h"
+#include "BoxStrategy/Framework/WeaponSystem/BoxStrategyHandWeaponComponent.h"
 #include "UnitOrderSystem/Framework/Components/UnitOrderAbilitySystemComponent.h"
 #include "BoxStrategy/GameAI/AbilitySystem/AbilitySettings/Misc/UGAS_Misc_MoveToSight.h"
 #include "BoxStrategy/GameAI/AbilitySystem/AbilitySettings/Characters/Warrior/UGAS_Warrior_Attack.h"
@@ -63,7 +63,7 @@ void UUGA_Warrior_Attack::ActivateAbility(const FGameplayAbilitySpecHandle Handl
 
 	if ( !IsValid( WeaponSystemComponent ) )
 	{
-		WeaponSystemComponent = ActorInfo->AvatarActor->GetComponentByClass<UBoxStrategyWeaponSystemComponent>();
+		WeaponSystemComponent = ActorInfo->AvatarActor->GetComponentByClass<UBoxStrategyHandWeaponComponent>();
 		{
 #if GAME_DEBUG_BUILDS
 			if ( !IsValid( WeaponSystemComponent ) )

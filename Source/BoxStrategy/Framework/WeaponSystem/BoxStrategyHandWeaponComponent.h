@@ -7,7 +7,7 @@
 
 #include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 
-#include "BoxStrategyWeaponSystemComponent.generated.h"
+#include "BoxStrategyHandWeaponComponent.generated.h"
 
 class UNiagaraComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FSimpleWeaponSystemDelegate );
@@ -15,19 +15,21 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams( FWeaponSystemRotationDelegate, flo
 
 
 class UWeaponFireControl;
-class UBoxStrategyItemData_Weapon;
+class UBoxStrategyItemData_HandWeapon;
 class UNiagaraSystem;
 class USkeletalMesh;
 class UAnimSequence;
 
-/** Нет нужды в функции Stop Fire, так как оружие делает только 1 выстрел всегда и завершает работу.
- *	По завершении выстрела делегат на завершение ожидания выстрела.
+/** This Component represents all hand weapons that can be used by settlers and other unit types with hands.
+ *
+ * We don't need Stop Fire function because the weapon make only one shot and always stops fire.
+ *	По завершении выстрела делегат на завершение ожидания выстрела (I don't get it. Forgot meaning =) ).
  *
  */
 
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, BlueprintType )
-class BOXSTRATEGY_API UBoxStrategyWeaponSystemComponent : public UActorComponent
+class BOXSTRATEGY_API UBoxStrategyHandWeaponComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
@@ -38,7 +40,7 @@ public:
 
 public:
 	// Sets default values for this component's properties
-	UBoxStrategyWeaponSystemComponent();
+	UBoxStrategyHandWeaponComponent();
 
 protected:
 	// Called when the game starts
@@ -67,7 +69,7 @@ private:
 	bool bRealoading = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "WeaponSystem", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UBoxStrategyItemData_Weapon> WeaponDataAsset = nullptr;
+	TObjectPtr<UBoxStrategyItemData_HandWeapon> WeaponDataAsset = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	USkeletalMeshComponent* WeaponSkeletalMeshComponent = nullptr;
@@ -98,12 +100,15 @@ private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UNiagaraSystem* WeaponFireEffect = nullptr;
 
+/**
 	// Async Effects Loading Data
 	TSharedPtr<FStreamableHandle> BulletEffect_LoadingHandle;
 	TSharedPtr<FStreamableHandle> WeaponFireEffect_LoadingHandle;
 	TSharedPtr<FStreamableHandle> ImpactEffect_LoadingHandle;
 	TSharedPtr<FStreamableHandle> AnimFireSequence_LoadingHandle;
 	TSharedPtr<FStreamableHandle> AnimReloadSequence_LoadingHandle;
+*/
+
 
 
 
@@ -132,13 +137,13 @@ public:
 public:
 
 	UFUNCTION(BlueprintCallable)
-	void InitializeWeaponSystemComponent(USkeletalMeshComponent* NewUnitSkeletalMeshComponent,
+	void InitializeHandWeaponComponent(USkeletalMeshComponent* NewUnitSkeletalMeshComponent,
 	                                     UNiagaraComponent*		 NewWeaponFireEffectComponent,
 	                                     UNiagaraComponent*		 NewWeaponBulletEffectComponent,
 	                                     UNiagaraComponent*		 NewWeaponImpactEffectComponent);
 
 	UFUNCTION(BlueprintCallable)
-	void EquipNewWeapon(UBoxStrategyItemData_Weapon* NewWeaponDataAsset);
+	void EquipNewWeapon(UBoxStrategyItemData_HandWeapon* NewWeaponDataAsset);
 
 	UFUNCTION(BlueprintCallable)
 	void UnequipWeapon();
@@ -164,7 +169,7 @@ public:
 	float GetWeaponRange();
 
 	UFUNCTION(BlueprintPure)
-	UBoxStrategyItemData_Weapon* GetWeaponDataAsset() { return WeaponDataAsset.Get(); };
+	UBoxStrategyItemData_HandWeapon* GetWeaponDataAsset() { return WeaponDataAsset.Get(); };
 
 private:
 

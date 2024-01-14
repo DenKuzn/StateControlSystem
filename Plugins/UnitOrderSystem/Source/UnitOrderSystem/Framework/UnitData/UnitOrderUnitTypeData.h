@@ -7,7 +7,24 @@
 #include "Engine/DataAsset.h"
 
 #include "UnitOrderAbilityData.h"
+#include "Misc/DataValidation.h"
 #include "UnitOrderUnitTypeData.generated.h"
+
+
+UCLASS()
+class UNITORDERSYSTEM_API UUnitOrderPrimaryDataAsset : public UPrimaryDataAsset
+{
+	GENERATED_BODY()
+
+	UFUNCTION( BlueprintPure )
+	virtual bool IsUnitOrderDataAssetValid() const { return true; };
+
+	UFUNCTION( BlueprintPure )
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const
+	{
+		return false;
+	};
+};
 
 /** DA собирается для каждого типа юнита со своим тегом и набором способностей.
  *  Unit - это управляемая игроком единица игры, которая может быть чем угодно:
@@ -49,34 +66,62 @@ class UUnitOrderGameplayAbility;
  */
 
 
-
 /** DA, которое хранит в себе общее описание типа юнита. */
 UCLASS()
-class UNITORDERSYSTEM_API UUnitOrderUnitTypeData : public UPrimaryDataAsset
+class UNITORDERSYSTEM_API UUnitOrderUnitTypeData : public UUnitOrderPrimaryDataAsset
 {
 	GENERATED_BODY()
 
 public:
-
 	// For what Type of Unit this AbilityDataAsset is.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag UnitTypeTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FObjectDescription UnitTypeDescription;
 
-	bool ValidateDataAsset()
+public:
+	bool ValidateDataAsset(bool NeedEnsure = true) const
 	{
 		bool bDataAssetValid = true;
 		if ( UnitTypeTag == FGameplayTag::EmptyTag )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitTypeTag"), *FString(__FUNCTION__), *GetName() );
+			if ( NeedEnsure )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitTypeTag"), *FString(__FUNCTION__), *GetName() );
+			}
 			bDataAssetValid = false;
 		}
 
 		return bDataAssetValid;
 	};
 
+public:
+	virtual bool IsUnitOrderDataAssetValid() const override
+	{
+		return ValidateDataAsset( false );
+	};
+
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const override
+	{
+		const UUnitOrderUnitTypeData* OtherDataAssetCasted = Cast<UUnitOrderUnitTypeData>( OtherDataAsset );
+
+		if ( OtherDataAssetCasted && OtherDataAssetCasted->UnitTypeTag == UnitTypeTag )
+		{
+			return true;
+		}
+
+		return false;
+	};
+
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override
+	{
+		if ( UnitTypeTag == FGameplayTag::EmptyTag )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "UnitTypeTag is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+		return Super::IsDataValid( Context );
+	}
 };
 
 
@@ -115,38 +160,97 @@ public:
  *	Это используется для динамического добавления абилок при разработке игры, чтобы не пересобирать всю игру.
  */
 UCLASS()
-class UNITORDERSYSTEM_API UUnitOrderUnitTypeAbilityData : public UPrimaryDataAsset
+class UNITORDERSYSTEM_API UUnitOrderUnitTypeAbilityData : public UUnitOrderPrimaryDataAsset
 {
 	GENERATED_BODY()
 
 public:
-
 	// For what Type of Unit this AbilityDataAsset is.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag UnitTypeTag;
 
 	// Full Ability Specs for this UnitType.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	TArray<FUnitOrderAbilityData> AllUnitAbilities;
 
 public:
-	bool ValidateDataAsset()
+	bool ValidateDataAsset(bool NeedEnsure = true) const
 	{
 		bool bDataAssetValid = true;
 		if ( UnitTypeTag == FGameplayTag::EmptyTag )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitTypeTag"), *FString(__FUNCTION__), *GetName() );
+			if ( NeedEnsure )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitTypeTag"), *FString(__FUNCTION__), *GetName() );
+			}
 			bDataAssetValid = false;
 		}
 
 		if ( AllUnitAbilities.Num() == 0 )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no abilities"), *FString(__FUNCTION__), *GetName() );
+			if ( NeedEnsure )
+			{
+				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no abilities"), *FString(__FUNCTION__), *GetName() );
+			}
 			bDataAssetValid = false;
 		}
 
 		return bDataAssetValid;
 	};
+
+public:
+	virtual bool IsUnitOrderDataAssetValid() const override
+	{
+		return ValidateDataAsset( false );
+	};
+
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const override
+	{
+		const UUnitOrderUnitTypeAbilityData* OtherDataAssetCasted = Cast<UUnitOrderUnitTypeAbilityData>( OtherDataAsset );
+
+		if ( !OtherDataAssetCasted )
+		{
+			return false;
+		}
+
+		if(OtherDataAssetCasted->UnitTypeTag != UnitTypeTag)
+		{
+			return false;
+		}
+
+		for ( auto& CurrentAbilityData : AllUnitAbilities )
+		{
+			for ( auto& OtherAbilityData : OtherDataAssetCasted->AllUnitAbilities )
+			{
+				if ( CurrentAbilityData.AbilityTag == OtherAbilityData.AbilityTag )
+				{
+					return true;
+				}
+
+				if ( CurrentAbilityData.UnitAbilityClass == OtherAbilityData.UnitAbilityClass )
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override
+	{
+		if ( UnitTypeTag == FGameplayTag::EmptyTag )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "UnitTypeTag is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+
+		if ( AllUnitAbilities.Num() == 0 )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "AllUnitAbilities Array is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+
+		return Super::IsDataValid( Context );
+	}
 };
 
 
@@ -170,49 +274,80 @@ public:
  *	Так же хранит прямое описание типа юнита FUnitOrderObjectDescription.
  *	Все остальные абилки, которые доступны для юнита, указываются в другом DA - UUnitOrderUnitSubtypeAbilityData */
 UCLASS()
-class UNITORDERSYSTEM_API UUnitOrderUnitSubtypeData : public UPrimaryDataAsset
+class UNITORDERSYSTEM_API UUnitOrderUnitSubtypeData : public UUnitOrderPrimaryDataAsset
 {
 	GENERATED_BODY()
 
 public:
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag UnitSubtypeTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FObjectDescription UnitSubtypeDescription;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag DefaultAbilityTag;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag AutoAbilityTag;
 
-	bool ValidateDataAsset(bool bFullChecking = false)
+public:
+	bool ValidateDataAsset(bool bFullChecking = false, bool NeedEnsure = true) const
 	{
 		bool bDataAssetValid = true;
 		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
 		{
-			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitSubtypeTag"), *FString(__FUNCTION__), *GetName() );
+			if ( NeedEnsure )
+				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitSubtypeTag"), *FString(__FUNCTION__), *GetName() );
 			bDataAssetValid = false;
 		}
 
-		if(bFullChecking)
+		if ( bFullChecking )
 		{
 			if ( DefaultAbilityTag == FGameplayTag::EmptyTag )
 			{
-				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no DefaultAbilityTag"), *FString(__FUNCTION__), *GetName() );
+				if ( NeedEnsure )
+					ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no DefaultAbilityTag"), *FString(__FUNCTION__), *GetName() );
 				bDataAssetValid = false;
 			}
 			if ( AutoAbilityTag == FGameplayTag::EmptyTag )
 			{
-				ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no AutoAbilityTag"), *FString(__FUNCTION__), *GetName() );
+				if ( NeedEnsure )
+					ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no AutoAbilityTag"), *FString(__FUNCTION__), *GetName() );
 				bDataAssetValid = false;
 			}
 		}
 
 		return bDataAssetValid;
 	};
+
+public:
+	virtual bool IsUnitOrderDataAssetValid() const override
+	{
+		return ValidateDataAsset( false, false );
+	};
+
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const override
+	{
+		const UUnitOrderUnitSubtypeData* OtherDataAssetCasted = Cast<UUnitOrderUnitSubtypeData>( OtherDataAsset );
+
+		if ( OtherDataAssetCasted && OtherDataAssetCasted->UnitSubtypeTag == UnitSubtypeTag )
+		{
+			return true;
+		}
+
+		return false;
+	};
+
+
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override
+	{
+		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "UnitTypeTag is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+		return Super::IsDataValid( Context );
+	}
 };
 
 /** DA, которое хранит список тегов абилок для подтипа.
@@ -221,31 +356,33 @@ public:
  *  так как в AbilitySystemComponent будет происходить проверка и отсечение дубликатов.
  */
 UCLASS()
-class UNITORDERSYSTEM_API UUnitOrderUnitSubtypeAbilityData : public UPrimaryDataAsset
+class UNITORDERSYSTEM_API UUnitOrderUnitSubtypeAbilityData : public UUnitOrderPrimaryDataAsset
 {
 	GENERATED_BODY()
 
 public:
-
 	// For what Type of Unit this SubUnitData is.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	FGameplayTag UnitSubtypeTag;
 
 	// List of Ability Tags for this SubUnit.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
 	TArray<FGameplayTag> AvailableAbilityTags;
 
-	bool ValidateDataAsset()
+public:
+	bool ValidateDataAsset(bool NeedUnsure = true) const
 	{
 		bool bDataAssetValid = true;
 
 		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
 		{
+			if(NeedUnsure)
 			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitSubtypeTag"), *FString(__FUNCTION__), *GetName() );
 			bDataAssetValid = false;
 		}
 		if ( AvailableAbilityTags.Num() == 0 )
 		{
+			if(NeedUnsure)
 			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no AvailableAbilityTags"), *FString(__FUNCTION__), *GetName() );
 			bDataAssetValid = false;
 		}
@@ -253,25 +390,67 @@ public:
 		return bDataAssetValid;
 	};
 
+public:
+	virtual bool IsUnitOrderDataAssetValid() const override
+	{
+		return ValidateDataAsset( false );
+	};
+
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const override
+	{
+		const UUnitOrderUnitSubtypeAbilityData* OtherDataAssetCasted = Cast<UUnitOrderUnitSubtypeAbilityData>( OtherDataAsset );
+
+		if ( !OtherDataAssetCasted )
+		{
+			return false;
+		}
+
+		if(OtherDataAssetCasted->UnitSubtypeTag != UnitSubtypeTag)
+		{
+			return false;
+		}
+
+		for ( auto& CurrentAbilityTag : AvailableAbilityTags )
+		{
+			for ( auto& OtherAbilityTag : OtherDataAssetCasted->AvailableAbilityTags )
+			{
+				if ( CurrentAbilityTag == OtherAbilityTag )
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override
+	{
+		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "UnitTypeTag is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+		return Super::IsDataValid( Context );
+	}
 };
 
 
 /* This DA reflects data from DA UUnitOrderUnitSubtypeData and UUnitOrderUnitSubtypeAbilityData. It is used for validating and storing data in Runtime. */
-USTRUCT(BlueprintType, Blueprintable)
+USTRUCT( BlueprintType, Blueprintable )
 struct UNITORDERSYSTEM_API FUnitOrderUnitSubtype
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly)
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TObjectPtr<UUnitOrderUnitSubtypeData> UnitSubtypeData = nullptr;
 
 	// List of Ability Tags for this SubUnit.
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly)
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TArray<FGameplayTag> AvailableAbilityTags;
 
-	FUnitOrderUnitSubtype(UUnitOrderUnitSubtypeData* NewUnitSubtypeData): UnitSubtypeData(NewUnitSubtypeData)
+	FUnitOrderUnitSubtype(UUnitOrderUnitSubtypeData* NewUnitSubtypeData): UnitSubtypeData( NewUnitSubtypeData )
 	{
-		if(!IsValid(UnitSubtypeData))
+		if ( !IsValid( UnitSubtypeData ) )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). New UnitSubtypeData invalid"), *FString(__FUNCTION__) );
 		}
@@ -280,29 +459,29 @@ struct UNITORDERSYSTEM_API FUnitOrderUnitSubtype
 	/** DO NOT USE IT. STRUCT CANNOT BE COMPILED WITHOUT DEFAULT CONSTRUCTOR FOR BLUEPRINTS */
 	FUnitOrderUnitSubtype()
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitSubtype()"));
+		UE_LOG( LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitSubtype()") );
 	};
 };
 
 
 /* This DA reflects data from DA UUnitOrderUnitTypeData and UUnitOrderUnitTypeAbilityData. It is used for validating and storing data in Runtime. */
-USTRUCT(BlueprintType, Blueprintable)
+USTRUCT( BlueprintType, Blueprintable )
 struct UNITORDERSYSTEM_API FUnitOrderUnitType
 {
 	GENERATED_BODY()
 	// For what Type of Unit this AbilityDataAsset is.
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly)
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TObjectPtr<UUnitOrderUnitTypeData> UnitTypeData = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly)
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TArray<FUnitOrderAbilityData> AllUnitAbilities;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly)
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TArray<FUnitOrderUnitSubtype> UnitSubtypes;
 
-	FUnitOrderUnitType(UUnitOrderUnitTypeData* NewUnitTypeData): UnitTypeData(NewUnitTypeData)
+	FUnitOrderUnitType(UUnitOrderUnitTypeData* NewUnitTypeData): UnitTypeData( NewUnitTypeData )
 	{
-		if(!IsValid(UnitTypeData))
+		if ( !IsValid( UnitTypeData ) )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). New UnitTypeData invalid"), *FString(__FUNCTION__) );
 		}
@@ -311,6 +490,6 @@ struct UNITORDERSYSTEM_API FUnitOrderUnitType
 	/** DO NOT USE IT. STRUCT CANNOT BE COMPILED WITHOUT DEFAULT CONSTRUCTOR FOR BLUEPRINTS */
 	FUnitOrderUnitType()
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitType()"));
+		UE_LOG( LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitType()") );
 	};
 };
