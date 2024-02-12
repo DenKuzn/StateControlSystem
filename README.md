@@ -1,5 +1,6 @@
 int Main()
 {
+
   Two Systems in my code.
     I have created the base 2 systems that can be used for strategy games.
     
@@ -10,4 +11,5 @@ int Main()
     Based on the Command pattern with an Ability System. This Plugin will be useful for tactical games like Jagged Alliance or 7.62. Unfortunately, I still haven't added a good example for using it, but you can read the code, right? =))
     
   P.S. There are a lot of comments in Russian. I will translate them into English if it will be necessary.
+  
 }
