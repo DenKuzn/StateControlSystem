@@ -41,6 +41,9 @@ public:
 	FSelectStateDelegate ObjectWasDeseleceted;
 
 	UPROPERTY(BlueprintAssignable)
+	FSelectStateDelegate OnCancelActiveSelection;
+
+	UPROPERTY(BlueprintAssignable)
 	FComponentWasChangedDelegate StateTagWasChanged;
 
 	UPROPERTY(BlueprintAssignable)
@@ -53,9 +56,18 @@ private:
 
 	bool bSelected = false;
 
+	//can be changed in runtime when needed.
+	UPROPERTY(EditDefaultsOnly, Category = StateControl)
 	bool bInteractionEnabled = true;
 
 public:
+
+	/** This function is called from object player selected. For Example:
+	 - When object die.
+	 - When player pressed "close selection" on widget.
+	 - etc. */
+	UFUNCTION(BlueprintCallable)
+	void CancelActiveSelection();
 
 	UFUNCTION(BlueprintPure)
 	void GetStateControlTag(FGameplayTag& OutStateControlTag);

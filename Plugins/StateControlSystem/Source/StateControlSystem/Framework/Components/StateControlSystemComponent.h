@@ -11,6 +11,8 @@ struct FGameplayTag;
 class UStateControlDataAsset;
 class UStateControl;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE( FStateControlSystemSimpleDelegate );
+
 
 
 
@@ -57,6 +59,10 @@ private:
 	TArray<UStateControl*> CurrentActiveStates;
 
 public:
+	UPROPERTY(BlueprintAssignable)
+	FStateControlSystemSimpleDelegate OnStateWasChanged;
+
+public:
 
 	/** Be sure that you will activate state manually when you turn off AutoActivate*/
 	UFUNCTION(BlueprintCallable)
@@ -82,6 +88,8 @@ public:
 	bool IsTagForStateControl(FGameplayTag SearchedStateTag, UStateControl* SearchedStateControl);
 
 
+	/** This meaning includes also and sleeping mode.
+	 *	Is This Control State in Active Array */
 	UFUNCTION(BlueprintPure)
 	bool IsStateControlActive(UStateControl* StateControl);
 

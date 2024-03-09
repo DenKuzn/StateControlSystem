@@ -7,9 +7,9 @@
 #include "NiagaraSystem.h"
 #include "GameFramework/Actor.h"
 
-#include "BoxStrategy/Framework/GameData/DataAssets/Items/BoxStrategyItemData_HandWeapon.h"
 #include "BoxStrategy/Framework/HealthSystem/BoxStrategyHealthComponent.h"
 #include "BoxStrategy/System/BoxStrategyAssetManager.h"
+#include "Framework/ProductionSystem/ProductDataAssets/PickableItems/HandWeaponData_Base.h"
 
 #include "GeneralDebugMacroses/Framework/DebugMacroses.h"
 
@@ -56,7 +56,7 @@ void UBoxStrategyHandWeaponComponent::InitializeHandWeaponComponent(USkeletalMes
 	WeaponImpactEffectComponent = NewWeaponImpactEffectComponent;
 }
 
-void UBoxStrategyHandWeaponComponent::EquipNewWeapon(UBoxStrategyItemData_HandWeapon* NewWeaponDataAsset)
+void UBoxStrategyHandWeaponComponent::EquipNewWeapon(UHandWeaponData_Base* NewWeaponDataAsset)
 {
 	FUNCTION_START_LOG();
 

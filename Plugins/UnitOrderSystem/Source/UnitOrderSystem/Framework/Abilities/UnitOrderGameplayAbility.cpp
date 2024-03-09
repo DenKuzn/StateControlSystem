@@ -12,6 +12,11 @@ UUnitOrderGameplayAbility::UUnitOrderGameplayAbility(const FObjectInitializer& O
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 }
 
+const FGameplayTag& UUnitOrderGameplayAbility::GetMyUnitSubtypeTag() const
+{
+	return GetUnitOrderAbilitySystemComponent()->GetCurrentUnitSubtypeTag();
+}
+
 void UUnitOrderGameplayAbility::SetAbilityTag(FGameplayTag NewAbilityTag)
 {
 	AbilityTags.Reset(1);
@@ -25,14 +30,14 @@ FGameplayTag UUnitOrderGameplayAbility::GetAbilityTag() const
 	return AbilityTags.Last();
 }
 
-UUnitOrderAbilitySystemComponent* UUnitOrderGameplayAbility::GetUnitOrderAbilitySystemComponent()
+UUnitOrderAbilitySystemComponent* UUnitOrderGameplayAbility::GetUnitOrderAbilitySystemComponent() const
 {
 	return Cast<UUnitOrderAbilitySystemComponent>(GetAbilitySystemComponentFromActorInfo());
 }
 
-const UUnitOrderAbilitySettings* UUnitOrderGameplayAbility::GetMyAbilitySettings()
+const UUnitOrderAbilitySettings* UUnitOrderGameplayAbility::GetMyAbilitySettings() const
 {
-	UUnitOrderAbilitySystemComponent* AbilityComponent = GetUnitOrderAbilitySystemComponent();
+	const UUnitOrderAbilitySystemComponent* AbilityComponent = GetUnitOrderAbilitySystemComponent();
 	{
 #if GAME_DEBUG_BUILDS
 		GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN(AbilityComponent, nullptr  );

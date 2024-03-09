@@ -41,7 +41,6 @@ public class UnitOrderSystem : ModuleRules
 
 				"GameplayTags",
 				"GameplayAbilities",
-				"AIModule",
 				"GameplayTasks",
 
 				"ObjectDescriptionPlugin",

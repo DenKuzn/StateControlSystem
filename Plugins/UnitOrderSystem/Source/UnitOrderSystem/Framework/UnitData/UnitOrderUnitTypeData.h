@@ -8,9 +8,14 @@
 
 #include "UnitOrderAbilityData.h"
 #include "Misc/DataValidation.h"
+#include "UtilityAI/EvaluationAbilityClass.h"
 #include "UnitOrderUnitTypeData.generated.h"
 
 
+struct FUnitOrderUnitSubtype;
+class UUnitOrderGameplayAbility;
+
+// Base Unit Order Primary Asset included check functions and interface for work with assets.
 UCLASS()
 class UNITORDERSYSTEM_API UUnitOrderPrimaryDataAsset : public UPrimaryDataAsset
 {
@@ -36,12 +41,6 @@ class UNITORDERSYSTEM_API UUnitOrderPrimaryDataAsset : public UPrimaryDataAsset
  *	Unit хранит в себе всю основную информацию для всех своих подтипов, когда как подтипы хранят в себе только свои уникальные данные.
  *	Например, Unit DA хранит сами абилки, а Unit Subtype DA хранит только теги абилок, которые могут быть у конкретно этого подтипа.
  */
-
-struct FUnitOrderObjectDescription;
-struct FUnitOrderAbilityData;
-struct FUnitOrderUnitSubtype;
-class UUnitOrderGameplayAbility;
-
 /** DA, которое хранит в себе общее описание типа юнита.
  *  В UnitOrderSystem используется структура юнит-подъюнит, в которой:
  *  - Unit Type - это базовый абстрактный тип, у которого есть описание, но нет игрового представления.
@@ -64,9 +63,6 @@ class UUnitOrderGameplayAbility;
  *  Использовать DA - это значит, прокидывать ссылки на DA во все места, где они используются.
  *  С Тегами проще - класс доступен в любой части движка (Это основной аргумент, почему DA не так удобны, как Tags).
  */
-
-
-/** DA, которое хранит в себе общее описание типа юнита. */
 UCLASS()
 class UNITORDERSYSTEM_API UUnitOrderUnitTypeData : public UUnitOrderPrimaryDataAsset
 {
@@ -123,7 +119,6 @@ public:
 		return Super::IsDataValid( Context );
 	}
 };
-
 
 /** DA которое отвечает за описание типа юнита и хранит все абилки для него (для всех подтипов так же).
  *	Зачем:
@@ -434,6 +429,90 @@ public:
 	}
 };
 
+UCLASS()
+class UNITORDERSYSTEM_API UUnitOrderUtilityAIAbilityData : public UUnitOrderPrimaryDataAsset
+{
+	GENERATED_BODY()
+
+public:
+	// For what Type of Unit this SubUnitData is.
+	UPROPERTY( EditDefaultsOnly, BlueprintReadWrite )
+	FGameplayTag UnitSubtypeTag;
+
+	/** List of Abilities for UtilityAI */
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
+	TArray<FUnitOrderUtilityAIAbilityData_Struct> AvailableUtilityAIAbilities;
+
+public:
+	bool ValidateDataAsset(bool NeedUnsure = true) const
+	{
+		bool bDataAssetValid = true;
+
+		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
+		{
+			if(NeedUnsure)
+			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no UnitSubtypeTag"), *FString(__FUNCTION__), *GetName() );
+			bDataAssetValid = false;
+		}
+		if ( AvailableUtilityAIAbilities.Num() == 0 )
+		{
+			if(NeedUnsure)
+			ensureAlwaysMsgf( false, TEXT("%s(). DataAsset (%s) has no AvailableAbilityTags"), *FString(__FUNCTION__), *GetName() );
+			bDataAssetValid = false;
+		}
+
+		return bDataAssetValid;
+	};
+
+public:
+	virtual bool IsUnitOrderDataAssetValid() const override
+	{
+		return ValidateDataAsset( false );
+	};
+
+	virtual bool IsDataAssetHasSameSettings(const UUnitOrderPrimaryDataAsset* OtherDataAsset) const override
+	{
+		const UUnitOrderUtilityAIAbilityData* OtherDataAssetCasted = Cast<UUnitOrderUtilityAIAbilityData>( OtherDataAsset );
+
+		if ( !OtherDataAssetCasted )
+		{
+			return false;
+		}
+
+		if(OtherDataAssetCasted->UnitSubtypeTag != UnitSubtypeTag)
+		{
+			return false;
+		}
+
+		for ( auto& CurrentAbilityData : AvailableUtilityAIAbilities )
+		{
+			for ( auto& OtherAbilityData : OtherDataAssetCasted->AvailableUtilityAIAbilities )
+			{
+				if ( CurrentAbilityData.AbilityTag == OtherAbilityData.AbilityTag )
+				{
+					return true;
+				}
+
+				// Every Ability must have own evaluation class. But it is not mandatory. It can be changed in future.
+				if ( CurrentAbilityData.EvaluationAbilityClass == OtherAbilityData.EvaluationAbilityClass )
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	};
+
+	virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const override
+	{
+		if ( UnitSubtypeTag == FGameplayTag::EmptyTag )
+		{
+			Context.AddWarning( FText::Format( NSLOCTEXT( "UnitOrderSystem", "UnitTypeTagEmpty", "UnitTypeTag is empty in {0}" ), FText::FromString( GetName() ) ) );
+		}
+		return Super::IsDataValid( Context );
+	}
+};
 
 /* This DA reflects data from DA UUnitOrderUnitSubtypeData and UUnitOrderUnitSubtypeAbilityData. It is used for validating and storing data in Runtime. */
 USTRUCT( BlueprintType, Blueprintable )
@@ -444,9 +523,13 @@ struct UNITORDERSYSTEM_API FUnitOrderUnitSubtype
 	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TObjectPtr<UUnitOrderUnitSubtypeData> UnitSubtypeData = nullptr;
 
-	// List of Ability Tags for this SubUnit.
+	/** List of Ability Tags for this Subtype that is available for player. */
 	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
 	TArray<FGameplayTag> AvailableAbilityTags;
+
+	/** List of Abilities for UtilityAI */
+	UPROPERTY( BlueprintReadOnly, BlueprintReadOnly )
+	TArray<FUnitOrderUtilityAIAbilityData_Struct> AvailableUtilityAIAbilities;
 
 	FUnitOrderUnitSubtype(UUnitOrderUnitSubtypeData* NewUnitSubtypeData): UnitSubtypeData( NewUnitSubtypeData )
 	{
@@ -459,7 +542,7 @@ struct UNITORDERSYSTEM_API FUnitOrderUnitSubtype
 	/** DO NOT USE IT. STRUCT CANNOT BE COMPILED WITHOUT DEFAULT CONSTRUCTOR FOR BLUEPRINTS */
 	FUnitOrderUnitSubtype()
 	{
-		UE_LOG( LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitSubtype()") );
+		//UE_LOG( LogTemp, Warning, TEXT("Don't use Default Constructor FUnitOrderUnitSubtype()") );
 	};
 };
 

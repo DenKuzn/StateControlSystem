@@ -27,6 +27,11 @@ void ABoxStrategyBuilding::Tick(float DeltaTime)
 	Super::Tick( DeltaTime );
 }
 
+void ABoxStrategyBuilding::SetBuildingData(UConstructionData_Base* NewConstructionData)
+{
+	BoxStrategyConstructionData = NewConstructionData;
+}
+
 UStateControlInteractComponent* ABoxStrategyBuilding::GetInteractComponent()
 {
 	return StateControlInteractComponent;

@@ -24,6 +24,7 @@ void UStateControlSystemComponent::BeginPlay()
 	Super::BeginPlay();
 
 	// If it is not controlled by Player, then end function.
+	/*
 	{
 		if ( APawn* Player = Cast<APawn>( GetOwner() ) )
 		{
@@ -47,7 +48,7 @@ void UStateControlSystemComponent::BeginPlay()
 			}
 		}
 	}
-
+	*/ // Это одиночная игра, поэтому нам не требуется проверка. Более того, SCSC Висит на PlayerState.
 
 	//check BaseStateControl.
 	{
@@ -116,7 +117,7 @@ UStateControl* UStateControlSystemComponent::SetNewActiveStateByTag(FGameplayTag
 	UStateControl** StateControlInStorage = StateControlsStorage.Find( NewStateTag );
 	{
 #if GAME_DEBUG_BUILDS
-		if ( !IsValid( *StateControlInStorage ) )
+		if ( !StateControlInStorage || !IsValid( *StateControlInStorage ) )
 		{
 			ensureAlwaysMsgf( false, TEXT("%s(). StateControl Invalid by tag: %s."), *FString(__FUNCTION__), *NewStateTag.GetTagName().ToString() );
 			return nullptr;
@@ -135,7 +136,7 @@ UStateControl* UStateControlSystemComponent::SetNewActiveStateByTag(FGameplayTag
 	// Блокируем горячие клавиши у предыдущего StateControl.
 	if ( IsValid( LastStateControl ) )
 	{
-		LastStateControl->DeactivateHotKeys();
+		LastStateControl->SleepState();
 	}
 
 	CurrentActiveStates.Add( ( *StateControlInStorage ) );
@@ -145,6 +146,7 @@ UStateControl* UStateControlSystemComponent::SetNewActiveStateByTag(FGameplayTag
 		( *StateControlInStorage )->ActivateState();
 	}
 
+	OnStateWasChanged.Broadcast();
 	return ( *StateControlInStorage );
 }
 
@@ -159,10 +161,14 @@ void UStateControlSystemComponent::DeactivateState(UStateControl* SearchedStateC
 	CurrentActiveStates.Remove( SearchedStateControl );
 	SearchedStateControl->DeactivateState();
 
-	if ( UStateControl* LastStateControl = CurrentActiveStates.Last() )
+	UStateControl* LastStateControl = CurrentActiveStates.Last();
+
+	if ( IsValid( LastStateControl ) && LastStateControl->GetStateControlStatus() == EStateControlStatus::ME_Sleeping )
 	{
-		LastStateControl->ActivateHotKeys();
+		LastStateControl->WakeUpState();
 	}
+
+	OnStateWasChanged.Broadcast();
 }
 
 UStateControl* UStateControlSystemComponent::DeactivateStateByTag(FGameplayTag SearchedStateTag)
@@ -190,6 +196,7 @@ UStateControl* UStateControlSystemComponent::DeactivateStateByTag(FGameplayTag S
 
 	DeactivateState( ( *StageInStorage ) );
 
+	OnStateWasChanged.Broadcast();
 	return ( *StageInStorage );
 }
 
@@ -224,6 +231,12 @@ bool UStateControlSystemComponent::IsStateControlActive(UStateControl* StateCont
 
 bool UStateControlSystemComponent::IslocalyControlled()
 {
+
+	return true;
+
+	//TODO: Компонент висит на PlayerState и работает для одиночного режима, поэтому всегда true.
+
+
 	APawn* Pawn = Cast<APawn>( GetOwner() );
 	if ( IsValid( Pawn ) && Pawn->IsLocallyControlled() )
 	{
@@ -231,89 +244,3 @@ bool UStateControlSystemComponent::IslocalyControlled()
 	}
 	return false;
 }
-
-
-/*
-void UStateControlSystemComponent::ActivateMainAction()
-{
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; --CurrentIndex )
-	{
-		// Check instance.
-		{
-#if GAME_DEBUG_BUILDS
-			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
-				continue;
-			}
-#endif
-		}
-
-		// We cache this value, because CurrentActiveState might be removed during ActivateMainAction().
-		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
-
-		CurrentActiveStates[ CurrentIndex ]->ActivateMainAction();
-		if ( bConsumeActions )
-		{
-			break;
-		}
-	}
-}
-
-void UStateControlSystemComponent::ActivateBackAction()
-{
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex-- )
-	{
-		// Check instance.
-		{
-#if GAME_DEBUG_BUILDS
-			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
-				continue;
-			}
-#endif
-		}
-
-		// We cache this value, because CurrentActiveState might be removed during ActivateBackAction().
-		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
-
-		CurrentActiveStates[ CurrentIndex ]->ActivateBackAction();
-		if ( bConsumeActions )
-		{
-			break;
-		}
-	}
-}
-
-void UStateControlSystemComponent::ActivateSecondAction()
-{
-	// Last in array - activate.
-	int32 CurrentStatesNum = CurrentActiveStates.Num();
-	for ( int32 CurrentIndex = CurrentStatesNum - 1; CurrentIndex >= 0; CurrentIndex-- )
-	{
-		// Check instance.
-		{
-#if GAME_DEBUG_BUILDS
-			if ( !IsValid( CurrentActiveStates[ CurrentIndex ] ) )
-			{
-				ensureAlwaysMsgf( false, TEXT("%s(). CurrentActiveStates[%i] invalid"), *FString(__FUNCTION__ ), CurrentIndex );
-				continue;
-			}
-#endif
-		}
-		// We cache this value, because ActivateSecondAction might be removed during ActivateBackAction().
-		bool bConsumeActions = CurrentActiveStates[ CurrentIndex ]->IsConsumeActions();
-
-		CurrentActiveStates[ CurrentIndex ]->ActivateSecondAction();
-		if ( bConsumeActions )
-		{
-			break;
-		}
-	}
-}
-*/

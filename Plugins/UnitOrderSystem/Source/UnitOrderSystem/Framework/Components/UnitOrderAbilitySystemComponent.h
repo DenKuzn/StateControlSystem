@@ -19,10 +19,11 @@ class UUnitOrderUnitTypeData;
 struct FUnitOrderAbilityData;
 
 
-/** Управление происходит только через Стейты и Абилки.
+/** Управление происходит через Стейты (Player actions), Абилки (current ability flow), and Unit Order Controllers (AI Controllers that can be added to Unit dynamically).
+
  *  Компонент не может вызывать сам новые стейты игры, так как это юнит, и он не должен иметь такого доступа - это не игрок.
  *  Юнит может только получать приказы и выполнять их, но не может сам запускать стейты игрока.
- *
+
  *  Default Order. Стейт запрашивает тег дефолтной абилки, создает дефолтный сеттинг класс, передает его и запускает абилку. */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UNITORDERSYSTEM_API UUnitOrderAbilitySystemComponent : public UAbilitySystemComponent
@@ -51,20 +52,27 @@ private:
 	TObjectPtr<UUnitOrderUnitTypeData> BaseUnitType = nullptr;
 
 	// Current subtype. Must be selected like default type. Can be modified in runtime.
-	UPROPERTY( EditDefaultsOnly, Category = "UnitOrder" )
+	UPROPERTY( EditAnywhere, Category = "UnitOrder" )
 	TObjectPtr<UUnitOrderUnitSubtypeData> CurrentUnitSubtype = nullptr;
 
-	// Массив тегов абилок, которые текущий подтип может использовать всегда.
-	// Хранится, как кеш, чтобы реже дергать весь массив UnitData из UnitOrderSubsystem.
-	//UPROPERTY()
-	//TArray<FGameplayTag> AllCurrentUnitSubtypeAbilityTags;
+	// Default Unit Order Type:
+	UPROPERTY( EditDefaultsOnly, Category = "UnitOrder" )
+	FGameplayTag DefaultOrderControllerTypeTag;
+
+	// Current Unit Order Type:
+	FGameplayTag CurrentOrderControllerTypeTag;
 
 	// Current Unit Orders.
 	UPROPERTY()
 	TArray<UUnitOrderAbilitySettings*> OrderSettingsList;
 
 public:
+	UPROPERTY( BlueprintAssignable, Category = "UnitOrder" )
 	FAbilitySystemDelegateWithTag OnUnitTypeChanged;
+
+	// Used by other controllers to know when Ability is ended.
+	UPROPERTY( BlueprintAssignable, Category = "UnitOrder" )
+	FAbilitySystemDelegateWithTag OnAbilityEndedWithComponentNonDefaultState;
 
 
 // GENERAL SECTION.
@@ -92,7 +100,7 @@ public:
 	void SetNewUnitSubtype(const FGameplayTag& NewUnitSubtype, bool bStartAutoAbility);
 
 	UFUNCTION( BlueprintPure, Category = "UnitOrder|UnitInformaton" )
-	FGameplayTag GetCurrentUnitSubtypeTag();
+	const FGameplayTag& GetCurrentUnitSubtypeTag() const;
 
 	UFUNCTION( BlueprintPure, Category = "UnitOrder|UnitInformaton" )
 	const UUnitOrderUnitSubtypeData* GetCurrentUnitSubtypeData();
@@ -108,6 +116,12 @@ public:
 // ORDER SECTION.
 public:
 
+	UFUNCTION( BlueprintCallable, Category = "UnitOrder|AbilityOrderControl" )
+	void SetNewOrderType(const FGameplayTag& NewOrderType);
+
+	UFUNCTION( BlueprintCallable, Category = "UnitOrder|AbilityOrderControl" )
+	const FGameplayTag& GetCurrentOrderTypeTag() const;
+
 	/** Add new order with Settings. For new orders that must be exlusive use bClearOrderList.
 	 * Can be called from States and Abilities. */
 	UFUNCTION( BlueprintCallable, Category = "UnitOrder|AbilityOrderControl" )
@@ -115,7 +129,7 @@ public:
 
 	/** There is no situation when Ability will not started from last Settings. Exept AutoAbilities. */
 	UFUNCTION( BlueprintCallable, Category = "UnitOrder|AbilityOrderControl" )
-	const UUnitOrderAbilitySettings* GetLastUnitAbilitySettings();
+	const UUnitOrderAbilitySettings* GetLastUnitAbilitySettings() const;
 
 	/** If Order List is empty then start an automatical ability */
 	UFUNCTION( BlueprintCallable, Category = "UnitOrder|AbilityOrderControl" )

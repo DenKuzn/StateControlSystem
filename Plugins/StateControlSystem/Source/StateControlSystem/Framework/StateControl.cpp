@@ -101,6 +101,13 @@ void UStateControl::ActivateHotKeys()
 
 void UStateControl::ActivateState()
 {
+	if(GetStateControlStatus() != EStateControlStatus::ME_Deactivated)
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). GetStateControlStatus() != EStateControlStatus::ME_Deactivated"), *FString(__FUNCTION__) );
+		return;
+	}
+
+	StateControlStatus = EStateControlStatus::ME_Activated;
 	ActivateHotKeys();
 	K2_ActivateState();
 }
@@ -133,10 +140,42 @@ void UStateControl::DeactivateHotKeys()
 
 void UStateControl::DeactivateState()
 {
+	if(GetStateControlStatus() == EStateControlStatus::ME_Deactivated)
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). GetStateControlStatus() == EStateControlStatus::ME_Deactivated"), *FString(__FUNCTION__) );
+		return;
+	}
 
+	StateControlStatus = EStateControlStatus::ME_Deactivated;
 	DeactivateHotKeys();
 	K2_DeactivateState();
 
+}
+
+void UStateControl::SleepState()
+{
+	if(GetStateControlStatus() != EStateControlStatus::ME_Activated)
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). GetStateControlStatus() != EStateControlStatus::ME_Activated"), *FString(__FUNCTION__) );
+		return;
+	}
+
+	StateControlStatus = EStateControlStatus::ME_Sleeping;
+	K2_SleepState();
+	DeactivateHotKeys();
+}
+
+void UStateControl::WakeUpState()
+{
+	if(GetStateControlStatus() != EStateControlStatus::ME_Sleeping)
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). GetStateControlStatus() != EStateControlStatus::ME_Sleeping"), *FString(__FUNCTION__) );
+		return;
+	}
+
+	StateControlStatus = EStateControlStatus::ME_Activated;
+	K2_WakeUpState();
+	ActivateHotKeys();
 }
 
 bool UStateControl::IsConsumeActions()
@@ -174,6 +213,21 @@ UStateControlInteractComponent* UStateControl::GetInteractComponentUnderMouse(EC
 	return nullptr;
 }
 
+FVector UStateControl::GetLocationUnderMouse(bool& bSuccess, ECollisionChannel TraceChannel, bool bTraceComplex)
+{
+	FHitResult HitResult;
+	GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor( TraceChannel, bTraceComplex, HitResult );
+
+	if ( HitResult.bBlockingHit )
+	{
+		bSuccess = true;
+		return HitResult.Location;
+	}
+
+	bSuccess = false;
+	return FVector::ZeroVector;
+}
+
 bool UStateControl::IsMyTag(FGameplayTag StateControlTag)
 {
 	UStateControlSystemComponent* ControlComponent = GetStateControlSystemComponent();
@@ -198,6 +252,11 @@ bool UStateControl::IsActiveStateControl()
 	return ControlComponent->IsStateControlActive( this );
 }
 
+EStateControlStatus UStateControl::GetStateControlStatus()
+{
+	return StateControlStatus;
+}
+
 void UStateControl::NewInputTagPropertyMapState(FGameplayTag StateControlInputTag, bool NewState)
 {
 	{
@@ -211,6 +270,29 @@ void UStateControl::NewInputTagPropertyMapState(FGameplayTag StateControlInputTa
 	}
 
 	InputTagPropertyMap.GameplayTagEventCallback( StateControlInputTag, NewState );
+}
+
+bool UStateControl::TryActivateStateControlFromObjectUnderMouse()
+{
+	UStateControlInteractComponent* InteractComponent = GetInteractComponentUnderMouse();
+	if(!IsValid( InteractComponent ) || !InteractComponent->IsInteractionEnabled())
+	{
+		return false;
+	}
+
+	UStateControlSystemComponent* StateControlSystemComponent = GetStateControlSystemComponent();
+	if(!IsValid( StateControlSystemComponent ))
+	{
+		ensureAlwaysMsgf( false, TEXT("%s(). !IsValid( StateControlSystemComponent )"), *FString(__FUNCTION__) );
+		return false;
+	}
+
+	FGameplayTag StateControlTag;
+	InteractComponent->GetStateControlTag(StateControlTag);
+
+	StateControlSystemComponent->SetNewActiveStateByTag( StateControlTag );
+	return true;
+
 }
 
 UStateControlSystemComponent* UStateControl::GetStateControlSystemComponent()

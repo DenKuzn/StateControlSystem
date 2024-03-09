@@ -21,20 +21,18 @@ public:
 
 	UUnitOrderGameplayAbility(const FObjectInitializer& ObjectInitializer);
 
-private:
-
-	// У абилок есть свой тег, который используется для поиска в AbilitySystemComponent. Лучше использовать его, не смотря на то, что он является массивом.
-	//FGameplayTag AbilityTag;
-
 public:
+
+	UFUNCTION(BlueprintPure, Category = "UnitOrder")
+	const FGameplayTag& GetMyUnitSubtypeTag() const;
 
 	void SetAbilityTag(FGameplayTag NewAbilityTag);
 
 	FGameplayTag GetAbilityTag() const;
 
 	UFUNCTION(BlueprintPure, Category = "UnitOrder")
-	UUnitOrderAbilitySystemComponent* GetUnitOrderAbilitySystemComponent();
+	UUnitOrderAbilitySystemComponent* GetUnitOrderAbilitySystemComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "UnitOrder")
-	const UUnitOrderAbilitySettings* GetMyAbilitySettings();
+	const UUnitOrderAbilitySettings* GetMyAbilitySettings() const;
 };

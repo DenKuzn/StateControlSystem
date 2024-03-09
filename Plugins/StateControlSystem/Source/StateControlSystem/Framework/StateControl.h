@@ -16,6 +16,15 @@ class UStateControlInputActionDataAsset;
 
 class UEnhancedInputComponent;
 
+UENUM(Blueprintable, BlueprintType)
+enum class EStateControlStatus : uint8
+{
+	ME_Deactivated,
+	ME_Sleeping,
+	ME_Activated
+
+};
+
 /**
 
 Класс управления игроком интерактивными объектами в игре.
@@ -95,24 +104,24 @@ private:
 	UPROPERTY(EditDefaultsOnly, Category = "StateControl|InputData", meta = (AllowPrivateAccess = "true"))
 	FGameplayTagPropertyMap InputTagPropertyMap;
 
+	EStateControlStatus StateControlStatus = EStateControlStatus::ME_Deactivated;
+
 public:
 	void InitializeStateControl( TSubclassOf<UStateControlWidget> StateWidget = nullptr );
 
-	UFUNCTION(BlueprintCallable)
-	void ActivateHotKeys();
-
-	UFUNCTION(BlueprintCallable)
-	void DeactivateHotKeys();
-
-
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "StateControlActivation", DisplayName = "ActivateState", meta=(ScriptName = "ActivateState"))
-	void K2_ActivateState();
+	// When State fully activated (moved to Active List). Important - It is called from Component. You cannot call it from inside of the state.
 	virtual void ActivateState();
 
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "StateControlActivation", DisplayName = "DeactivateState", meta=(ScriptName = "DeactivateState"))
-	void K2_DeactivateState();
+	// When State fully deactivated (moved from Active List). Important - It is called from Component. You cannot call it from inside of the state.
 	virtual void DeactivateState();
+
+	// Used when some other state was activated under this state
+	UFUNCTION(BlueprintCallable)
+	void SleepState();
+
+	// Used when state under this state was deactivated.
+	UFUNCTION(BlueprintCallable)
+	void WakeUpState();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "StateControlInput")
 	void StateControlInputTriggered(FGameplayTag InputTag, bool bPressed);
@@ -120,11 +129,15 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsConsumeActions();
 
+	// It should be used on Activate State.
 	UFUNCTION(BlueprintPure)
 	UStateControlInteractComponent* GetInteractComponentWithMyTagUnderMouse(ECollisionChannel TraceChannel = ECC_Camera, bool bTraceComplex = true);
 
 	UFUNCTION(BlueprintPure)
 	UStateControlInteractComponent* GetInteractComponentUnderMouse(ECollisionChannel TraceChannel = ECC_Camera, bool bTraceComplex = true);
+
+	UFUNCTION(BlueprintPure)
+	FVector GetLocationUnderMouse( bool& bSuccess, ECollisionChannel TraceChannel = ECC_Camera, bool bTraceComplex = true);
 
 	UFUNCTION(BlueprintPure)
 	bool IsMyTag(FGameplayTag StateControlTag);
@@ -134,8 +147,15 @@ public:
 	UFUNCTION(BlueprintPure)
 	bool IsActiveStateControl();
 
+	UFUNCTION(BlueprintPure)
+	EStateControlStatus GetStateControlStatus();
+
 	UFUNCTION(BlueprintCallable) // доступно для теста.
 	void NewInputTagPropertyMapState(FGameplayTag StateControlInputTag, bool NewState);
+
+	/** Check object under mouse for State Interact Component. If it available then activate it */
+	UFUNCTION(BlueprintCallable)
+	bool TryActivateStateControlFromObjectUnderMouse();
 
 
 public:
@@ -145,10 +165,33 @@ public:
 	//virtual EDataValidationResult IsDataValid(class FDataValidationContext& Context) const;
 #endif
 
+protected:
 
+	// Whet State is started.
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "StateControlActivation", DisplayName = "ActivateState", meta=(ScriptName = "ActivateState"))
+	void K2_ActivateState();
+
+	//When State was stoped.
+	UFUNCTION(BlueprintImplementableEvent, Category = "StateControlActivation", DisplayName = "DeactivateState", meta=(ScriptName = "DeactivateState"))
+	void K2_DeactivateState();
+
+	/* When State fully activated (moved to Active List).
+	 * For Example we opened some Widgets and pressed on Unit. In that case we may be need to close this widget. Or do some preparations before we will give control to other states */
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "StateControlActivation", DisplayName = "SleepState", meta=(ScriptName = "SleepState"))
+	void K2_SleepState();
+
+	// When State fully activated (moved to Active List)
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "StateControlActivation", DisplayName = "WakeUpState", meta=(ScriptName = "WakeUpState"))
+	void K2_WakeUpState();
 
 
 private:
+
+	//UFUNCTION(BlueprintCallable)
+	void ActivateHotKeys();
+
+	//UFUNCTION(BlueprintCallable)
+	void DeactivateHotKeys();
 
 	UFUNCTION(BlueprintPure)
 	UStateControlSystemComponent* GetStateControlSystemComponent();

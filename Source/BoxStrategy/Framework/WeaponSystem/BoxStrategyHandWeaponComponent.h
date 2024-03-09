@@ -13,9 +13,8 @@ class UNiagaraComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FSimpleWeaponSystemDelegate );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams( FWeaponSystemRotationDelegate, float, NewHorizontalDirection, float, NewVerticalDirection );
 
-
+class UHandWeaponData_Base;
 class UWeaponFireControl;
-class UBoxStrategyItemData_HandWeapon;
 class UNiagaraSystem;
 class USkeletalMesh;
 class UAnimSequence;
@@ -69,20 +68,20 @@ private:
 	bool bRealoading = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "WeaponSystem", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<UBoxStrategyItemData_HandWeapon> WeaponDataAsset = nullptr;
+	TObjectPtr<UHandWeaponData_Base> WeaponDataAsset = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	USkeletalMeshComponent* WeaponSkeletalMeshComponent = nullptr;
+	TObjectPtr<USkeletalMeshComponent> WeaponSkeletalMeshComponent = nullptr;
 
 /////////////////// WE NEED ACCES TO COMPONENTS AND NEED THIS COMPONENTS TO BE LOADED IN UNIT FOR USE. OTHERWISE WE CANNOT USE EFFECTS. IT IS VERY EXPENSIVE TO CREATE THEM EVERY FIRE
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UNiagaraComponent* WeaponFireEffectComponent = nullptr;
+	TObjectPtr<UNiagaraComponent> WeaponFireEffectComponent = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UNiagaraComponent* WeaponBulletEffectComponent = nullptr;
+	TObjectPtr<UNiagaraComponent> WeaponBulletEffectComponent = nullptr;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	UNiagaraComponent* WeaponImpactEffectComponent = nullptr;
+	TObjectPtr<UNiagaraComponent> WeaponImpactEffectComponent = nullptr;
 
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -99,17 +98,6 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	UNiagaraSystem* WeaponFireEffect = nullptr;
-
-/**
-	// Async Effects Loading Data
-	TSharedPtr<FStreamableHandle> BulletEffect_LoadingHandle;
-	TSharedPtr<FStreamableHandle> WeaponFireEffect_LoadingHandle;
-	TSharedPtr<FStreamableHandle> ImpactEffect_LoadingHandle;
-	TSharedPtr<FStreamableHandle> AnimFireSequence_LoadingHandle;
-	TSharedPtr<FStreamableHandle> AnimReloadSequence_LoadingHandle;
-*/
-
-
 
 
 public:
@@ -143,7 +131,7 @@ public:
 	                                     UNiagaraComponent*		 NewWeaponImpactEffectComponent);
 
 	UFUNCTION(BlueprintCallable)
-	void EquipNewWeapon(UBoxStrategyItemData_HandWeapon* NewWeaponDataAsset);
+	void EquipNewWeapon(UHandWeaponData_Base* NewWeaponDataAsset);
 
 	UFUNCTION(BlueprintCallable)
 	void UnequipWeapon();
@@ -169,7 +157,7 @@ public:
 	float GetWeaponRange();
 
 	UFUNCTION(BlueprintPure)
-	UBoxStrategyItemData_HandWeapon* GetWeaponDataAsset() { return WeaponDataAsset.Get(); };
+	UHandWeaponData_Base* GetWeaponDataAsset() { return WeaponDataAsset.Get(); };
 
 private:
 
@@ -182,49 +170,5 @@ private:
 	void OnFireDelayEnded();
 
 	void AssetWasLoaded();
-
-
-
-
-
-/*
-	template <class Type>
-	void AsyncLoadAsset(TSoftObjectPtr<Type> SoftObjectPtr,
-	                    TSharedPtr<FStreamableHandle>& OutHandle,
-	                    FStreamableManager& StreamableManager,
-	                    Type** Outer, FString AssetNameForDebug = "UnknownAssetType")
-	{
-		OutHandle.Reset();
-		OutHandle = nullptr;
-
-		if ( IsValid( SoftObjectPtr.Get() ) )
-		{
-			*Outer = Cast<Type>( SoftObjectPtr.Get() );
-			return;
-		}
-
-		if ( SoftObjectPtr.IsPending() )
-		{
-			FStreamableDelegate OnLoaded;
-			OnLoaded.BindLambda( [this, &TempOutHandle = OutHandle, &Outer = *Outer]() { HandleLoadedAsset( TempOutHandle, &Outer ); } );
-			OutHandle = StreamableManager.RequestAsyncLoad( SoftObjectPtr.ToSoftObjectPath(), OnLoaded );
-			return;
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("%s(). SoftObjectPtr (%s type) empty or invalid"), *FString(__FUNCTION__), *AssetNameForDebug);
-	}
-
-
-	template <class Type>
-	void HandleLoadedAsset(TSharedPtr<FStreamableHandle>& StreamableHandle,
-	                       Type** Outer)
-	{
-		*Outer = Cast<Type>( StreamableHandle->GetLoadedAsset() );
-		StreamableHandle.Reset();
-
-		UE_LOG( LogTemp, Error, TEXT("%s(). Is Valid Bullet: %s"), *FString(__FUNCTION__), TEXT_TRUE_FALSE( IsValid( *Outer ) ) );
-	}
-
-*/
 
 };

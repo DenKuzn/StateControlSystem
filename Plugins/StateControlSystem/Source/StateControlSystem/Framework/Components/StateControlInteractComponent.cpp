@@ -33,6 +33,17 @@ void UStateControlInteractComponent::TickComponent(float DeltaTime, ELevelTick T
 	// ...
 }
 
+void UStateControlInteractComponent::CancelActiveSelection()
+{
+	if(bSelected)
+	{
+		OnCancelActiveSelection.Broadcast();
+		return;
+	}
+
+	ensureAlwaysMsgf( false, TEXT("%S(). Object Called Canccel Selection but was not selected"), *FString(__FUNCTION__) );
+}
+
 void UStateControlInteractComponent::GetStateControlTag(FGameplayTag& OutStateControlTag)
 {
 	OutStateControlTag = StateControlTag;

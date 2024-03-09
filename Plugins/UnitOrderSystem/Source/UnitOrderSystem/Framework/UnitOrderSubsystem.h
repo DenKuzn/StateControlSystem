@@ -60,10 +60,12 @@ public:
 	UFUNCTION( BlueprintPure, Category = "UnitOrderSubsystem" )
 	bool GetUnitSubtypeAbilityTags(const FGameplayTag& UnitSubtypeTag, TArray<FGameplayTag>& OutAbilityTags);
 
-	const TArray<FUnitOrderAbilityData>* GetAllUnitTypeAbilityData(const FGameplayTag& UnitSubtypeTag);
-
 	UFUNCTION(BlueprintCallable, Category = "UnitOrderSubsystem")
 	void GetAllUnitDataCopy(TArray<FUnitOrderUnitType>& OutAllFullUnitTypeData);
+
+	const TArray<FUnitOrderAbilityData>* GetAllUnitTypeAbilityData(const FGameplayTag& UnitSubtypeTag);
+
+	const TArray<FUnitOrderUtilityAIAbilityData_Struct>* GetAvailableUtilityAIAbilities(const FGameplayTag& UnitSubtypeTag);
 
 private:
 	void LoadingUnitTypeData();
@@ -71,8 +73,11 @@ private:
 
 	void LoadingUnitSubtypeData();
 	void LoadingUnitSubtypeAbilityData();
+	void LoadingUnitSubtypeUtilityAIAbilityData();  //UtilityAI Ability Data Loading
 
 	void InitializationUnitDataCompllite();
+
+	FUnitOrderUnitSubtype* GetUnitSubtypeDataInternal(const FGameplayTag& UnitSubtypeTag);
 
 
 };

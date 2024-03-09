@@ -7,6 +7,7 @@
 #include "UnitData/UnitOrderUnitTypeData.h"
 
 #include "GeneralDebugMacroses/Framework/DebugMacroses.h"
+#include "UtilityAI/EvaluationAbilityClass.h"
 
 DEFINE_LOG_CATEGORY_STATIC( LogUnitOrderSystem, Log, All );
 
@@ -152,6 +153,22 @@ const TArray<FUnitOrderAbilityData>* UUnitOrderSubsystem::GetAllUnitTypeAbilityD
 void UUnitOrderSubsystem::GetAllUnitDataCopy(TArray<FUnitOrderUnitType>& OutAllFullUnitTypeData)
 {
 	OutAllFullUnitTypeData = AllFullUnitTypeData;
+}
+
+const TArray<FUnitOrderUtilityAIAbilityData_Struct>* UUnitOrderSubsystem::GetAvailableUtilityAIAbilities(const FGameplayTag& UnitSubtypeTag)
+{
+	FUnitOrderUnitSubtype* UnitSubtypeData = GetUnitSubtypeDataInternal(UnitSubtypeTag);
+	{
+#if GAME_DEBUG_BUILDS
+		if ( !UnitSubtypeData )
+		{
+			ensureAlwaysMsgf( false, TEXT("%s(). ! UnitSubtypeData. "), *FString(__FUNCTION__) );
+			return nullptr;
+		}
+#endif
+	}
+
+	return &UnitSubtypeData->AvailableUtilityAIAbilities;
 }
 
 void UUnitOrderSubsystem::LoadingUnitTypeData()
@@ -425,7 +442,6 @@ void UUnitOrderSubsystem::LoadingUnitSubtypeData()
 
 void UUnitOrderSubsystem::LoadingUnitSubtypeAbilityData()
 {
-	//TODO Last check and find ability tags and add it to the subtypes Data.
 	const FPrimaryAssetType UnitTypeDataAssetType = FPrimaryAssetType{UUnitOrderUnitSubtypeAbilityData::StaticClass()->GetFName()};
 	UAssetManager::Get().LoadPrimaryAssetsWithType( UnitTypeDataAssetType, TArray<FName>(), FStreamableDelegate::CreateLambda( [this]()
 	{
@@ -436,7 +452,7 @@ void UUnitOrderSubsystem::LoadingUnitSubtypeAbilityData()
 			if ( UnitTypeDataAssetNames.Num() == 0 )
 			{
 				UE_LOG( LogUnitOrderSystem, Warning, TEXT("%s(). No UUnitOrderUnitSubtypeAbilityData found. Ended"), *FString( __FUNCTION__ ) );
-				InitializationUnitDataCompllite();
+				LoadingUnitSubtypeUtilityAIAbilityData();
 				return;
 			}
 		} // Check Array for empty state.
@@ -550,6 +566,122 @@ void UUnitOrderSubsystem::LoadingUnitSubtypeAbilityData()
 
 		// Вс загрузка завершена. Делегат на сообщение о завершении загрузки.
 		//UE_LOG( LogUnitOrderSystem, Warning, TEXT("Async LoadingUnitSubtypeAbilityData(). Ended") );
+		LoadingUnitSubtypeUtilityAIAbilityData();
+	} ) );
+}
+
+void UUnitOrderSubsystem::LoadingUnitSubtypeUtilityAIAbilityData()
+{
+	const FPrimaryAssetType UnitTypeDataAssetType = FPrimaryAssetType{UUnitOrderUtilityAIAbilityData::StaticClass()->GetFName()};
+	UAssetManager::Get().LoadPrimaryAssetsWithType( UnitTypeDataAssetType, TArray<FName>(), FStreamableDelegate::CreateLambda( [this]()
+	{
+		UAssetManager& AssetManager = UAssetManager::Get();
+		TArray<FAssetData> UnitTypeDataAssetNames;
+		AssetManager.GetPrimaryAssetDataList( FPrimaryAssetType{UUnitOrderUtilityAIAbilityData::StaticClass()->GetFName()}, UnitTypeDataAssetNames );
+		{
+			if ( UnitTypeDataAssetNames.Num() == 0 )
+			{
+				UE_LOG( LogUnitOrderSystem, Warning, TEXT("%s(). No UUnitOrderUilityAIAbilityData found. Ended"), *FString( __FUNCTION__ ) );
+				InitializationUnitDataCompllite();
+				return;
+			}
+		} // Check Array for empty state.
+
+		for ( auto& LoadedAssetDataName : UnitTypeDataAssetNames )
+		{
+			UUnitOrderUtilityAIAbilityData* NewDataAsset = Cast<UUnitOrderUtilityAIAbilityData>( AssetManager.GetPrimaryAssetObject( LoadedAssetDataName.GetPrimaryAssetId() ) );
+			{
+				if ( !IsValid( NewDataAsset ) )
+				{
+					UE_LOG( LogUnitOrderSystem, Warning, TEXT("DataAssetName (%s) invalid"), *LoadedAssetDataName.AssetName.ToString() );
+					continue;
+				}
+				if ( !NewDataAsset->ValidateDataAsset() )
+				{
+					UE_LOG( LogUnitOrderSystem, Warning, TEXT("DataAsset (%s) has invaid Data"), *LoadedAssetDataName.AssetName.ToString() );
+					continue;
+				}
+			} // Check NewDataAsset pointer and Validate stored Data.
+
+			FUnitOrderUnitSubtype* UnitSubtypeData = GetUnitSubtypeDataInternal(NewDataAsset->UnitSubtypeTag);
+			{
+#if GAME_DEBUG_BUILDS
+				if ( !UnitSubtypeData )
+				{
+					ensureAlwaysMsgf( false, TEXT("%s(). ! UnitSubtypeData. "), *FString(__FUNCTION__) );
+					continue;
+				}
+#endif
+			}
+
+			for (auto& NewUtilityAIAbilityData: NewDataAsset->AvailableUtilityAIAbilities)
+			{
+				{
+							if(!NewUtilityAIAbilityData.AbilityTag.IsValid())
+							{
+								UE_LOG( LogUnitOrderSystem, Warning,
+										TEXT("%s(). AbilityTag is invalid. DataAsset Name: %s"),
+										*FString(__FUNCTION__),
+										*NewDataAsset->GetName());
+
+								continue;
+							}
+
+							if(!NewUtilityAIAbilityData.EvaluationAbilityClass.Get())
+							{
+								UE_LOG( LogUnitOrderSystem, Warning,
+										TEXT("%s(). EvaluationAbilityClass is invalid. Tag is: %s. DataAsset Name: %s"),
+										*FString(__FUNCTION__),
+										*NewUtilityAIAbilityData.AbilityTag.ToString(),
+										*NewDataAsset->GetName());
+
+								continue;
+							}
+
+						} // Check for errors.
+
+				{
+					bool bAbilityTagAleradyAdded = false;
+					for (auto& ExistingUtilityAIAbilityData: UnitSubtypeData->AvailableUtilityAIAbilities)
+					{
+
+
+						if ( ExistingUtilityAIAbilityData.AbilityTag == NewUtilityAIAbilityData.AbilityTag )
+						{
+							UE_LOG( LogUnitOrderSystem, Warning,
+							        TEXT("%s(). Utility AI AbilityTag (%s) already added to UnitSubtype (%s). DataAsset Name: %s"),
+							        *FString(__FUNCTION__),
+							        *NewUtilityAIAbilityData.AbilityTag.ToString(),
+							        *NewDataAsset->UnitSubtypeTag.ToString(),
+							        *NewDataAsset->GetName() );
+							bAbilityTagAleradyAdded = true;
+							break;
+						}
+
+						if ( ExistingUtilityAIAbilityData.EvaluationAbilityClass == NewUtilityAIAbilityData.EvaluationAbilityClass )
+						{
+							UE_LOG( LogUnitOrderSystem, Warning,
+							        TEXT("%s(). Utility AI EvaluationAbilityClass (%s) already added to UnitSubtype (%s). DataAsset Name: %s"),
+							        *FString(__FUNCTION__),
+							        *NewUtilityAIAbilityData.EvaluationAbilityClass->GetName(),
+							        *NewDataAsset->UnitSubtypeTag.ToString(),
+							        *NewDataAsset->GetName() );
+							bAbilityTagAleradyAdded = true;
+							break;
+						}
+					}
+					if ( bAbilityTagAleradyAdded )
+					{
+						continue;
+					}
+				} // Check for doubles. If double found, then it is error. Otherwise add new ability tag to the array.
+
+				UnitSubtypeData->AvailableUtilityAIAbilities.Add(NewUtilityAIAbilityData);
+			}
+		}
+
+		// Вс загрузка завершена. Делегат на сообщение о завершении загрузки.
+		//UE_LOG( LogUnitOrderSystem, Warning, TEXT("Async LoadingUnitSubtypeAbilityData(). Ended") );
 		InitializationUnitDataCompllite();
 	} ) );
 }
@@ -563,4 +695,35 @@ void UUnitOrderSubsystem::InitializationUnitDataCompllite()
 	};
 
 	UE_LOG( LogUnitOrderSystem, Warning, TEXT("%s(). Ended"), *FString(__FUNCTION__) );
+}
+
+
+FUnitOrderUnitSubtype* UUnitOrderSubsystem::GetUnitSubtypeDataInternal(const FGameplayTag& UnitSubtypeTag)
+{
+	// Ищем существующий тип юнита. Он должен уже существовать. Если нет, то это ошибка.
+	for ( auto& ExistingUnitType : AllFullUnitTypeData )
+	{
+		// Нашли тип юнита, к которому будут относиться новые теги абилок.
+		if ( IsValid( ExistingUnitType.UnitTypeData ) && UnitSubtypeTag.MatchesTag( ExistingUnitType.UnitTypeData->UnitTypeTag ) )
+		{
+			for ( auto& ExistingUnitSubtypeData : ExistingUnitType.UnitSubtypes )
+			{
+				{
+					if ( !IsValid( ExistingUnitSubtypeData.UnitSubtypeData ) )
+					{
+						ensureAlwaysMsgf( false, TEXT("%(). !IsValid(UnitSubtypeData.UnitSubtypeData). "), *FString(__FUNCTION__) );
+						continue;
+					}
+				}
+
+				// Нашли Подтип - начинаем добавлять теги доступных абилок для подтипа.
+				if ( ExistingUnitSubtypeData.UnitSubtypeData->UnitSubtypeTag == UnitSubtypeTag )
+				{
+					return &ExistingUnitSubtypeData;
+				}
+			}
+		}
+	}
+
+	return nullptr;
 }

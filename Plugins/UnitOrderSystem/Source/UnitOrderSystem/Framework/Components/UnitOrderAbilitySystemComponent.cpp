@@ -38,6 +38,8 @@ void UUnitOrderAbilitySystemComponent::BeginPlay()
 		return;
 	}
 
+	CurrentOrderControllerTypeTag = DefaultOrderControllerTypeTag;
+
 	UUnitOrderSubsystem* UnitOrderSubsystem = GetUnitOrderSubsystem();
 	{
 #if GAME_DEBUG_BUILDS
@@ -67,9 +69,20 @@ void UUnitOrderAbilitySystemComponent::NotifyAbilityEnded(FGameplayAbilitySpecHa
 {
 	Super::NotifyAbilityEnded( Handle, Ability, bWasCancelled );
 
-	// Предполагается, что если абилка была отменена, то это потому, что была запущена новая абилка.
+	// If the ability was canceled that means new ability started. When an ability is finished by self it always FinishAbility() without cancelation.
+
+	// If it was new controller then it assigned his tag to the component
+	// ( When this ability will finish the work ) && ( no one order was added ) then
+	// ( Current Order Type Tag will be checked ) If it is not default then ASC will send message to all controllers that have control over it.
+	// ( If it is default then try execute Next Order and run AutoAbility by default. )
 	if ( bWasCancelled )
 	{
+		return;
+	}
+
+	if(CurrentOrderControllerTypeTag != DefaultOrderControllerTypeTag)
+	{
+		OnAbilityEndedWithComponentNonDefaultState.Broadcast( CurrentOrderControllerTypeTag );
 		return;
 	}
 
@@ -197,7 +210,7 @@ void UUnitOrderAbilitySystemComponent::SetNewUnitSubtype(const FGameplayTag& New
 	OnUnitTypeChanged.Broadcast( NewUnitSubtype );
 }
 
-FGameplayTag UUnitOrderAbilitySystemComponent::GetCurrentUnitSubtypeTag()
+const FGameplayTag& UUnitOrderAbilitySystemComponent::GetCurrentUnitSubtypeTag() const
 {
 	{
 #if GAME_DEBUG_BUILDS
@@ -243,6 +256,17 @@ void UUnitOrderAbilitySystemComponent::GetCurrentUnitSubtypeAbilityTags(TArray<F
 
 #pragma region ORDER SETTINGS
 
+
+void UUnitOrderAbilitySystemComponent::SetNewOrderType(const FGameplayTag& NewOrderType)
+{
+	CurrentOrderControllerTypeTag = NewOrderType;
+}
+
+const FGameplayTag& UUnitOrderAbilitySystemComponent::GetCurrentOrderTypeTag() const
+{
+	return CurrentOrderControllerTypeTag;
+}
+
 void UUnitOrderAbilitySystemComponent::AddNextUnitAbilityOrderSettings(UUnitOrderAbilitySettings* NewAbilitySettings, bool bClearOrderList)
 {
 	{
@@ -267,7 +291,7 @@ void UUnitOrderAbilitySystemComponent::AddNextUnitAbilityOrderSettings(UUnitOrde
 	OrderSettingsList.Add( NewAbilitySettings );
 }
 
-const UUnitOrderAbilitySettings* UUnitOrderAbilitySystemComponent::GetLastUnitAbilitySettings()
+const UUnitOrderAbilitySettings* UUnitOrderAbilitySystemComponent::GetLastUnitAbilitySettings() const
 {
 	return OrderSettingsList.Last();
 }
@@ -293,20 +317,7 @@ void UUnitOrderAbilitySystemComponent::ExecuteNextUnitOrder()
 			return;
 		}
 
-		// Перебрать все существующие добавленные абилки и найти в них абилку с автозапускным тегом.
-		UUnitOrderGameplayAbility* UnitAutoAbility = FindAbilityInstanceByTag( UnitAbilityList->AutoAbilityTag );
-
-		//UGameplayAbility* AbilityCDO = UnitAutoAbilityData.UnitAbility->GetDefaultObject<UGameplayAbility>();
-		{
-#if GAME_DEBUG_BUILDS
-			GAME_DEBUG_CHECK_UNREALPOINTER_WITH_RETURN( UnitAutoAbility, );
-#endif
-		}
-
-		if ( !TryActivateAbilityByClass( UnitAutoAbility->GetClass() ) )
-		{
-			ensureAlwaysMsgf( false, TEXT("%s(). !TryActivateAbilityByClass( AbilityCDO->GetClass() )"), *FString(__FUNCTION__) );
-		}
+		ExecuteNewUnitOrder( NewObject<UUnitOrderAbilitySettings>(), UnitAbilityList->AutoAbilityTag, true );
 
 		return;
 	} // if flow down to this part function will return in any case.
@@ -476,6 +487,15 @@ bool UUnitOrderAbilitySystemComponent::ValidateSettings()
 		bAllGood = false;
 		ensureAlwaysMsgf( false,
 		                  TEXT("%s(). CurrentUnitSubtype->UnitSubtypeTag == FGameplayTag::EmptyTag. In Class: %s."),
+		                  *FString(__FUNCTION__),
+		                  *GetOwner()->GetName() );
+	}
+
+	if(DefaultOrderControllerTypeTag == FGameplayTag::EmptyTag)
+	{
+		bAllGood = false;
+		ensureAlwaysMsgf( false,
+		                  TEXT("%s(). DefaultOrderTypeTag == FGameplayTag::EmptyTag. In Class: %s."),
 		                  *FString(__FUNCTION__),
 		                  *GetOwner()->GetName() );
 	}
